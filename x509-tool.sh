@@ -11,22 +11,32 @@ srv_dir="server"
 client_dir="client"
 
 ca_days=7300
-
 ca_bits=8192
 intm_bits=4096
 srv_bits=2048
 client_bits=2048
 
+# uncomment if a Intermediate-CA should be used
+#use_intermediate="yes"
+
 rand="openssl rand -hex 8"
 
 function prompt {
   RED='\033[0;31m'
+  GREEN='\033[0;32m'
   LGRAY='\033[1;37m'
   NONE='\033[0m'
   if [ -z "$2" ]; then
     COLOR=$LGRAY
   else
-    COLOR=$2
+    case $2 in
+      "red")
+        COLOR=$RED;;
+      "green")
+        COLOR=$GREEN;;
+      *)
+        COLOR=$NONE;;
+    esac
   fi
   echo -e "${COLOR}$1${NONE}"
 }
@@ -166,6 +176,10 @@ function update_ca_crl {
 
 
 function create_intermediate {
+  if [ -z $use_intermediate ]; then
+    prompt "intermediate certificate is diabled" red
+    exit 2
+  fi
   # create intermediate folder
   mkdir -p $intm_dir
   mkdir -p $intm_dir/certs $intm_dir/crl $intm_dir/newcerts $intm_dir/csr $intm_dir/private
@@ -207,6 +221,10 @@ function create_intermediate {
 }
 
 function update_intermediate_crl {
+  if [ -z $use_intermediate ]; then
+    prompt "intermediate certificate is diabled" red
+    exit 2
+  fi
   prompt "updating certificate revocation list"
   openssl ca -config $intm_cnf -gencrl -out $intm_dir/crl/intermediate-crl.pem
   cont $?
@@ -215,6 +233,10 @@ function update_intermediate_crl {
 }
 
 function revoke_intermediate {
+  if [ -z $use_intermediate ]; then
+    prompt "intermediate certificate is diabled" red
+    exit 2
+  fi
   name=$1
   prompt "revoking intermediate certificate"
   openssl ca -config $ca_cnf -revoke $intm_dir/certs/intermediate-cert.pem
@@ -316,12 +338,16 @@ function export_pkcs12 {
 
 function cont {
   if [ $1 -ne 0 ]; then
-    style='\033[0;31m'
     prompt "-----------------"
-    prompt "An error occurred" $style
+    prompt "An error occurred" red
     prompt "-----------------"
     exit
   fi
 }
+
+if [ -z $use_intermediate ]; then
+  # sign all request with root-ca
+  intm_dir=$ca_dir
+fi
 
 main $*
