@@ -1,4 +1,4 @@
-# OpenSSL intermediate CA configuration file.
+# OpenSSL Intermediate-CA configuration file.
 
 [ ca ]
 default_ca = CA_default
@@ -25,7 +25,6 @@ default_crl_days  = 365
 
 # SHA-1 is deprecated, so use SHA-2 instead.
 default_md        = sha256
-
 name_opt          = ca_default
 cert_opt          = ca_default
 default_days      = 1825

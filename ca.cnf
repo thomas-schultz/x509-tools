@@ -1,4 +1,4 @@
-# OpenSSL root CA configuration file.
+# OpenSSL Root-CA configuration file.
 
 [ ca ]
 default_ca = CA_default
@@ -23,6 +23,7 @@ crl               = $dir/crl/ca-crl.pem
 crl_extensions    = crl_ext
 default_crl_days  = 365
 
+# SHA-1 is deprecated, so use SHA-2 instead.
 default_md        = sha256
 name_opt          = ca_default
 cert_opt          = ca_default
@@ -37,13 +38,23 @@ countryName             = match
 stateOrProvinceName     = match
 organizationName        = match
 organizationalUnitName  = optional
-commonName              = optional
+commonName              = supplied
 emailAddress            = optional
+
+[ policy_loose ]
+# Allow the intermediate CA to sign a more diverse range of certificates.
+# See the POLICY FORMAT section of the `ca` man page.
+countryName             = optional
+stateOrProvinceName     = optional
+localityName            = optional
+organizationName        = optional
+organizationalUnitName  = optional
+commonName              = supplied
+emailAddress            = supplied
 
 [ req ]
 # Options for the `req` tool (`man req`).
 default_bits        = 4096
-default_md          = sha256
 string_mask         = utf8only
 distinguished_name  = req_distinguished_name
 x509_extensions     = v3_ca
