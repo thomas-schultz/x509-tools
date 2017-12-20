@@ -138,4 +138,3 @@ extendedKeyUsage = critical, OCSPSigning
 
 # do not move, file gets appended here
 [alt_names]
-URI.1 =
