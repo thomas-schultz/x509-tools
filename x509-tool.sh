@@ -136,7 +136,8 @@ function show_help {
 
 function create_ca {
   # create root-ca folders
-  mkdir -p $ca_dir/certs $ca_dir/crl $ca_dir/newcerts $ca_dir/private
+  mkdir -p $ca_dir/
+  mkdir -p $ca_dir/certs $ca_dir/crl $ca_dir/newcerts $ca_dir/csr $ca_dir/private
   chmod 700 $ca_dir/private
   touch $ca_dir/index.txt
   # workaround for "Can't open $ca_dir/index.txt.attr for reading, No such file or directory"
@@ -167,7 +168,7 @@ function create_ca {
 }
 
 function update_ca_crl {
-  prompt "updating intermediate-ca revocation list"
+  prompt "updating root-ca revocation list"
   openssl ca -config $ca_cnf -gencrl -out $ca_dir/crl/ca-crl.pem
   echo "$ca_dir/crl/ca-crl.pem"
   openssl crl -in $ca_dir/crl/ca-crl.pem -noout -text > $ca_dir/crl/ca-crl.txt
@@ -222,8 +223,7 @@ function create_intermediate {
 
 function update_intermediate_crl {
   if [ -z $use_intermediate ]; then
-    prompt "intermediate certificate is diabled" red
-    exit 2
+    update_ca_crl
   fi
   prompt "updating certificate revocation list"
   openssl ca -config $intm_cnf -gencrl -out $intm_dir/crl/intermediate-crl.pem
@@ -256,7 +256,7 @@ function create_server {
   openssl req -config $srv_cnf -new -key $srv_dir/private/$name-key.pem -out $intm_dir/csr/$name-csr.pem
   cont $?
 
-  prompt "inpecting server certificate request for $name"
+  prompt "inspecting server certificate request for $name"
   openssl asn1parse -inform PEM -in $intm_dir/csr/$name-csr.pem > $intm_dir/csr/$name-csr.txt
   echo "$intm_dir/csr/$name-csr.txt"
   new_config=${name}-${intm_cnf}
@@ -348,6 +348,7 @@ function cont {
 if [ -z $use_intermediate ]; then
   # sign all request with root-ca
   intm_dir=$ca_dir
+  intm_cnf=$ca_cnf
 fi
 
 main $*
