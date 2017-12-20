@@ -165,6 +165,13 @@ function create_ca {
   chmod 444 $ca_dir/certs/ca-cert.*
 
   update_ca_crl
+
+  prompt "link certificate as chain"
+  ln -s $ca_dir/certs/ca-cert.pem > $ca_dir/certs/certificate-chain.pem
+  echo "$ca_dir/certs/certificate-chain.pem"
+  openssl x509 -outform der -in $ca_dir/certs/certificate-chain.pem -out $ca_dir/certs/certificate-chain.crt
+  echo "$ca_dir/certs/certificate-chain.crt"
+
 }
 
 function update_ca_crl {
@@ -214,11 +221,11 @@ function create_intermediate {
 
   update_intermediate_crl
 
-  prompt "creating cerificate chain"
-  cat $ca_dir/certs/ca-cert.pem $intm_dir/certs/intermediate-cert.pem > $intm_dir/certs/intermediate-chain.pem
-  echo "$intm_dir/certs/intermediate-chain.pem"
-  openssl x509 -outform der -in $intm_dir/certs/intermediate-chain.pem -out $intm_dir/certs/intermediate-chain.crt
-  echo "$intm_dir/certs/intermediate-chain.crt"
+  prompt "creating certificate chain"
+  cat $ca_dir/certs/ca-cert.pem $intm_dir/certs/intermediate-cert.pem > $intm_dir/certs/certificate-chain.pem
+  echo "$intm_dir/certs/certificate-chain.pem"
+  openssl x509 -outform der -in $intm_dir/certs/certificate-chain.pem -out $intm_dir/certs/certificate-chain.crt
+  echo "$intm_dir/certs/certificate-chain.crt"
 }
 
 function update_intermediate_crl {
@@ -330,7 +337,7 @@ function export_pkcs12 {
   dir=$1
   name=$2
   prompt "exporting to pkcs12 format"
-  openssl pkcs12 -export -out $dir/$name.p12 -inkey $dir/private/$name-key.pem -in $dir/certs/$name-cert.pem -certfile $intm_dir/certs/intermediate-chain.pem
+  openssl pkcs12 -export -out $dir/$name.p12 -inkey $dir/private/$name-key.pem -in $dir/certs/$name-cert.pem -certfile $intm_dir/certs/certificate-chain.pem
   cont $?
   echo "$dir/$name.p12"
 }
