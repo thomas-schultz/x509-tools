@@ -29,6 +29,7 @@ name_opt          = ca_default
 cert_opt          = ca_default
 default_days      = 1825
 preserve          = no
+unique_subject    = no
 policy            = policy_strict
 
 
@@ -37,6 +38,18 @@ policy            = policy_strict
 # See the POLICY FORMAT section of `man ca`.
 countryName             = match
 stateOrProvinceName     = match
+organizationName        = match
+organizationalUnitName  = optional
+commonName              = supplied
+emailAddress            = optional
+
+
+[ policy_moderate ]
+# Allow the intermediate CA to sign a more diverse range of certificates.
+# See the POLICY FORMAT section of the `ca` man page.
+countryName             = optional
+stateOrProvinceName     = optional
+localityName            = optional
 organizationName        = match
 organizationalUnitName  = optional
 commonName              = supplied
@@ -74,13 +87,13 @@ commonName                      = Common Name
 emailAddress                    = Email Address
 
 # Optionally, specify some defaults.
-countryName_default             = DE
-stateOrProvinceName_default     = Germany
-localityName_default            = Kirchheim
-0.organizationName_default      = genua
-organizationalUnitName_default  = QAU
-emailAddress_default            = qau-list@genua.de
-commonName_default              = QAU Root Certificate Authority
+countryName_default             = $ENV::countryName
+stateOrProvinceName_default     = $ENV::stateOrProvinceName
+localityName_default            = $ENV::localityName
+0.organizationName_default      = $ENV::organizationName
+organizationalUnitName_default  = $ENV::organizationalUnitName
+emailAddress_default            = $ENV::emailAddress
+commonName_default              = $ENV::commonName
 
 
 [ server_cert ]
