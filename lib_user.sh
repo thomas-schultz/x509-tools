@@ -10,7 +10,7 @@ function create_server {
   bits="${bits:-$srv_bits}"
   days="${days:-$srv_days}"
 
-  attribs=( "countryName" "stateOrProvinceName" "localityName" "organizationName" "organizationalUnitName" "emailAddress" "commonName" "altName" )
+  attribs=( "countryName" "stateOrProvinceName" "localityName" "organizationName" "organizationalUnitName" "emailAddress" "commonName" "altName0" )
   export_params "${attribs[@]}"
 
   mkdir -p $srv_dir/certs $srv_dir/private $srv_dir/chain
@@ -55,7 +55,7 @@ function create_client {
   bits="${bits:-$client_bits}"
   days="${days:-$client_days}"
 
-  attribs=( "countryName" "stateOrProvinceName" "localityName" "organizationName" "organizationalUnitName" "emailAddress" "commonName" "altName" )
+  attribs=( "countryName" "stateOrProvinceName" "localityName" "organizationName" "organizationalUnitName" "emailAddress" "commonName" "altName0" )
   export_params "${attribs[@]}"
 
   mkdir -p $client_dir/certs $client_dir/private $client_dir/chain

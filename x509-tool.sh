@@ -50,7 +50,7 @@ function show_usage {
   echo "    -i/--interactive              load presets from file"
   echo "    -b/--bits <number>            set key length"
   echo "    -pw/--passphrase <pw>         set passphrase for private key"
-  echo "    -cp/--ca-passphrase <pw>          passphrase for private key of authority"
+  echo "    -cp/--ca-passphrase <pw>      passphrase for private key of authority"
   echo "    --ca-cnf <file>               openssl config for CAs"
   echo "    --server-cnf <file>           openssl config for server certificates"
   echo "    --client-cnf <file>           openssl config for client certificates"
@@ -140,7 +140,6 @@ while [ "$1" != "" ]; do
       ;;
     *)
       FIXEDARGS+=("$1")
-      echo "push $1"
       ;;
   esac
   shift

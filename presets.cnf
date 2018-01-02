@@ -7,5 +7,5 @@ organizationName        = O
 organizationalUnitName  = OU
 emailAddress            = mail@domain.tld
 commonName              = CN
-altName                 = subjectAltName
+altName0                = subjectAltName
 crlUrl                  = www.domain.tld
