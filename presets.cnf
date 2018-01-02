@@ -1,6 +1,11 @@
 # preset file
 
-countryName            = DE
-stateOrProvinceName    = Germany
-localityName           = Kirchheim
-organizationName       = genua
+countryName             = C+
+stateOrProvinceName     = ST
+localityName            = L
+organizationName        = O
+organizationalUnitName  = OU
+emailAddress            = mail@domain.tld
+commonName              = CN
+altName                 = subjectAltName
+crlUrl                  = www.domain.tld
