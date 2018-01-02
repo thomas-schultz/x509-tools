@@ -9,6 +9,8 @@ source "${BASH_SOURCE%/*}/lib_user.sh"
 # set validation times
 ca_days=7300
 intm_days=1825
+srv_days=380
+client_days=380
 
 # set key lengths
 ca_bits=8192
@@ -32,7 +34,7 @@ batch_mode="-batch"
 rand="openssl rand -hex 8"
 
 function show_usage {
-  echo "Usage: $0 [<options>] <command> <subcommand> "
+  echo "Usage: $0 [<options>] <command> <subcommand>"
   echo "  commands:"
   echo "    create ca <name>                  create root ca, default 'root'"
   echo "    create intermediate <ca> <name>   create intermediate ca, default 'intermediate'"
@@ -48,13 +50,12 @@ function show_usage {
   echo "    -i/--interactive              load presets from file"
   echo "    -b/--bits <number>            set key length"
   echo "    -pw/--passphrase <pw>         set passphrase for private key"
-  echo "    -cp/--ca-passphrase <pw>          passphrase for private key of authority"
+  echo "    -cp/--ca-passphrase <pw>      passphrase for private key of authority"
   echo "    --ca-cnf <file>               openssl config for CAs"
   echo "    --server-cnf <file>           openssl config for server certificates"
   echo "    --client-cnf <file>           openssl config for client certificates"
   echo "    --pkcs12 <pw>                 export client/server certs to pkcs12 file"
   echo "    -KEY=VALUE                    C/ST/L/O/OU/CN/@/CRL/DNS"
-
 }
 
 if [ $# -eq 0 ]; then
@@ -62,6 +63,7 @@ if [ $# -eq 0 ]; then
   exit 1
 fi
 
+FIXEDARGS=()
 subjaltname_count=0
 # parse args
 while [ "$1" != "" ]; do
@@ -137,7 +139,7 @@ while [ "$1" != "" ]; do
       echo "ERROR: unknown parameter \"$PARAM\"" && exit 1
       ;;
     *)
-      break
+      FIXEDARGS+=("$1")
       ;;
   esac
   shift
@@ -213,7 +215,4 @@ function update {
   esac
 }
 
-
-
-
-main $*
+main ${FIXEDARGS[@]}

@@ -23,4 +23,4 @@ stateOrProvinceName_default     = $ENV::stateOrProvinceName
 localityName_default            = $ENV::localityName
 0.organizationName_default      = $ENV::organizationName
 commonName_default              = $ENV::commonName
-0.subjectAltName_default        = $ENV::altName
+0.subjectAltName_default        = $ENV::altName0
