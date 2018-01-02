@@ -1,11 +1,12 @@
 # OpenSSL Root-CA configuration file.
 
 [ ca ]
-default_ca = CA_default
+default_ca        = CA_default
+name              = $ENV::ca_name
 
 [ CA_default ]
 # Directory and file locations.
-dir               = ./root-ca
+dir               = $ENV::ca_dir
 certs             = $dir/certs
 crl_dir           = $dir/crl
 new_certs_dir     = $dir/newcerts
@@ -14,12 +15,12 @@ serial            = $dir/serial
 RANDFILE          = $dir/private/.rand
 
 # The root key and root certificate.
-private_key       = $dir/private/ca-key.pem
-certificate       = $dir/certs/ca-cert.pem
+private_key       = $dir/private/key.pem
+certificate       = $dir/certs/cert.pem
 
 # For certificate revocation lists.
 crlnumber         = $dir/crlnumber
-crl               = $dir/crl/ca-crl.pem
+crl               = $dir/crl/crl.pem
 crl_extensions    = crl_ext
 default_crl_days  = 365
 
@@ -29,6 +30,7 @@ name_opt          = ca_default
 cert_opt          = ca_default
 default_days      = 1825
 preserve          = no
+unique_subject    = no
 policy            = policy_strict
 
 
@@ -37,6 +39,18 @@ policy            = policy_strict
 # See the POLICY FORMAT section of `man ca`.
 countryName             = match
 stateOrProvinceName     = match
+organizationName        = match
+organizationalUnitName  = optional
+commonName              = supplied
+emailAddress            = optional
+
+
+[ policy_moderate ]
+# Allow the intermediate CA to sign a more diverse range of certificates.
+# See the POLICY FORMAT section of the `ca` man page.
+countryName             = optional
+stateOrProvinceName     = optional
+localityName            = optional
 organizationName        = match
 organizationalUnitName  = optional
 commonName              = supplied
@@ -60,7 +74,6 @@ emailAddress            = supplied
 default_bits        = 4096
 string_mask         = utf8only
 distinguished_name  = req_distinguished_name
-x509_extensions     = v3_ca
 
 
 [ req_distinguished_name ]
@@ -74,66 +87,69 @@ commonName                      = Common Name
 emailAddress                    = Email Address
 
 # Optionally, specify some defaults.
-countryName_default             = DE
-stateOrProvinceName_default     = Germany
-localityName_default            = Kirchheim
-0.organizationName_default      = genua
-organizationalUnitName_default  = QAU
-emailAddress_default            = qau-list@genua.de
-commonName_default              = QAU Root Certificate Authority
-
-
-[ server_cert ]
-# Extensions for server certificates (`man x509v3_config`).
-basicConstraints = CA:FALSE
-nsCertType = server
-nsComment = "OpenSSL Generated Server Certificate"
-subjectKeyIdentifier = hash
-authorityKeyIdentifier = keyid,issuer:always
-keyUsage = critical, digitalSignature, keyEncipherment
-extendedKeyUsage = serverAuth
-subjectAltName = @alt_names
-
-
-[ client_cert ]
-# Extensions for client certificates (`man x509v3_config`).
-basicConstraints = CA:FALSE
-nsCertType = client, email
-nsComment = "OpenSSL Generated Client Certificate"
-subjectKeyIdentifier = hash
-authorityKeyIdentifier = keyid,issuer
-keyUsage = critical, nonRepudiation, digitalSignature, keyEncipherment
-extendedKeyUsage = clientAuth, emailProtection
+countryName_default             = $ENV::countryName
+stateOrProvinceName_default     = $ENV::stateOrProvinceName
+localityName_default            = $ENV::localityName
+0.organizationName_default      = $ENV::organizationName
+organizationalUnitName_default  = $ENV::organizationalUnitName
+emailAddress_default            = $ENV::emailAddress
+commonName_default              = $ENV::commonName
 
 
 [ v3_ca ]
 # Extensions for a typical CA (`man x509v3_config`).
-subjectKeyIdentifier = hash
-authorityKeyIdentifier = keyid:always,issuer
-basicConstraints = critical, CA:true
-keyUsage = critical, digitalSignature, cRLSign, keyCertSign
+subjectKeyIdentifier            = hash
+authorityKeyIdentifier          = keyid:always,issuer
+basicConstraints                = critical, CA:true
+keyUsage                        = critical, digitalSignature, cRLSign, keyCertSign
+
 
 
 [ v3_intermediate_ca ]
 # Extensions for a typical intermediate CA (`man x509v3_config`).
-subjectKeyIdentifier = hash
-authorityKeyIdentifier = keyid:always,issuer
-basicConstraints = critical, CA:true, pathlen:0
-keyUsage = critical, digitalSignature, cRLSign, keyCertSign
+subjectKeyIdentifier            = hash
+authorityKeyIdentifier          = keyid:always,issuer
+basicConstraints                = critical, CA:true, pathlen:0
+keyUsage                        = critical, digitalSignature, cRLSign, keyCertSign
+
+
+[ server_cert ]
+# Extensions for server certificates (`man x509v3_config`).
+basicConstraints                = CA:FALSE
+nsCertType                      = server
+nsComment                       = "OpenSSL Generated Server Certificate"
+subjectKeyIdentifier            = hash
+authorityKeyIdentifier          = keyid,issuer:always
+keyUsage                        = critical, digitalSignature, keyEncipherment
+extendedKeyUsage                = serverAuth
+subjectAltName                  = @alt_names
+
+
+[ client_cert ]
+# Extensions for client certificates (`man x509v3_config`).
+basicConstraints                = CA:FALSE
+nsCertType                      = client, email
+nsComment                       = "OpenSSL Generated Client Certificate"
+subjectKeyIdentifier            = hash
+authorityKeyIdentifier          = keyid,issuer
+keyUsage                        = critical, nonRepudiation, digitalSignature, keyEncipherment
+extendedKeyUsage                = clientAuth, emailProtection
+subjectAltName                  = @alt_names
 
 
 [ crl_ext ]
 # Extension for CRLs (`man x509v3_config`).
-authorityKeyIdentifier=keyid:always
+#authorityKeyIdentifier          = keyid:always
+crlDistributionPoints           = URI:$ENV::crlUrl
 
 
 [ ocsp ]
 # Extension for OCSP signing certificates (`man ocsp`).
-basicConstraints = CA:FALSE
-subjectKeyIdentifier = hash
-authorityKeyIdentifier = keyid,issuer
-keyUsage = critical, digitalSignature
-extendedKeyUsage = critical, OCSPSigning
+basicConstraints                = CA:FALSE
+subjectKeyIdentifier            = hash
+authorityKeyIdentifier          = keyid,issuer
+keyUsage                        = critical, digitalSignature
+extendedKeyUsage                = critical, OCSPSigning
 
 
 # do not move, file gets appended here

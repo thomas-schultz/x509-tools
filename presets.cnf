@@ -1,0 +1,11 @@
+# preset file
+
+countryName             = C+
+stateOrProvinceName     = ST
+localityName            = L
+organizationName        = O
+organizationalUnitName  = OU
+emailAddress            = mail@domain.tld
+commonName              = CN
+altName                 = subjectAltName
+crlUrl                  = www.domain.tld
