@@ -1,10 +1,10 @@
 # OpenSSL Root-CA configuration file.
 
 [ ca ]
-default_ca        = CA_default
-name              = $ENV::ca_name
+default_ca        = ca_default
 
-[ CA_default ]
+
+[ ca_default ]
 # Directory and file locations.
 dir               = $ENV::ca_dir
 certs             = $dir/certs
@@ -21,17 +21,16 @@ certificate       = $dir/certs/cert.pem
 # For certificate revocation lists.
 crlnumber         = $dir/crlnumber
 crl               = $dir/crl/crl.pem
-crl_extensions    = crl_ext
-default_crl_days  = 365
+default_crl_days  = 30
 
 # SHA-1 is deprecated, so use SHA-2 instead.
 default_md        = sha256
 name_opt          = ca_default
 cert_opt          = ca_default
-default_days      = 1825
+default_days      = 7300
 preserve          = no
 unique_subject    = no
-policy            = policy_strict
+policy            = $ENV::policy
 
 
 [ policy_strict ]
@@ -103,6 +102,13 @@ authorityKeyIdentifier          = keyid:always,issuer
 basicConstraints                = critical, CA:true
 keyUsage                        = critical, digitalSignature, cRLSign, keyCertSign
 
+[ v3_ca_crl ]
+# Extensions for a typical CA (`man x509v3_config`).
+subjectKeyIdentifier            = hash
+authorityKeyIdentifier          = keyid:always,issuer
+basicConstraints                = critical, CA:true
+keyUsage                        = critical, digitalSignature, cRLSign, keyCertSign
+crlDistributionPoints           = URI:$ENV::crlUrl
 
 
 [ v3_intermediate_ca ]
@@ -111,6 +117,14 @@ subjectKeyIdentifier            = hash
 authorityKeyIdentifier          = keyid:always,issuer
 basicConstraints                = critical, CA:true, pathlen:0
 keyUsage                        = critical, digitalSignature, cRLSign, keyCertSign
+
+[ v3_intermediate_ca_crl ]
+# Extensions for a typical intermediate CA (`man x509v3_config`).
+subjectKeyIdentifier            = hash
+authorityKeyIdentifier          = keyid:always,issuer
+basicConstraints                = critical, CA:true, pathlen:0
+keyUsage                        = critical, digitalSignature, cRLSign, keyCertSign
+crlDistributionPoints           = URI:$ENV::crlUrl
 
 
 [ server_cert ]
@@ -135,12 +149,6 @@ authorityKeyIdentifier          = keyid,issuer
 keyUsage                        = critical, nonRepudiation, digitalSignature, keyEncipherment
 extendedKeyUsage                = clientAuth, emailProtection
 subjectAltName                  = @alt_names
-
-
-[ crl_ext ]
-# Extension for CRLs (`man x509v3_config`).
-#authorityKeyIdentifier          = keyid:always
-crlDistributionPoints           = URI:$ENV::crlUrl
 
 
 [ ocsp ]

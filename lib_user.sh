@@ -9,8 +9,10 @@ function create_server {
   fi
   bits="${bits:-$srv_bits}"
   days="${days:-$srv_days}"
+  policy="policy_moderate"
+  extensions="server_cert"
 
-  attribs=( "countryName" "stateOrProvinceName" "localityName" "organizationName" "organizationalUnitName" "emailAddress" "commonName" "altName0" )
+  attribs=( "altName0" )
   export_params "${attribs[@]}"
 
   mkdir -p $srv_dir/certs $srv_dir/private $srv_dir/chain
@@ -32,8 +34,10 @@ function create_server {
   sed -n '/X509v3 Subject Alternative Name/{n;p;}' $auth_dir/csr/$name-csr.txt | awk '{ print "DNS." ++count[$6] " = " substr($7,2) }' >> $tmp_cnf
 
   prompt "signing server certificate for $name with CA '$auth_dir'"
-  export_cnf $auth_name $auth_dir
-  openssl ca $batch_mode -config $tmp_cnf $auth_passin -policy policy_moderate -extensions server_cert -days $days -notext -in $auth_dir/csr/$name-csr.pem -out $srv_dir/certs/$name-cert.pem
+  export_ca_dir $auth_dir
+  echo "$auth_dir/private/key.pem"
+  echo "openssl ca $batch_mode -config $tmp_cnf -extensions $extensions $auth_passin -days $days -notext -in $auth_dir/csr/$name-csr.pem -out $srv_dir/certs/$name-cert.pem"
+  openssl ca $batch_mode -config $tmp_cnf -extensions $extensions $auth_passin -days $days -notext -in $auth_dir/csr/$name-csr.pem -out $srv_dir/certs/$name-cert.pem
   cont $?
   rm $tmp_cnf
 
@@ -54,8 +58,10 @@ function create_client {
   fi
   bits="${bits:-$client_bits}"
   days="${days:-$client_days}"
+  policy="policy_moderate"
+  extensions="client_cert"
 
-  attribs=( "countryName" "stateOrProvinceName" "localityName" "organizationName" "organizationalUnitName" "emailAddress" "commonName" "altName0" )
+  attribs=( "countryName" "stateOrProvinceName" "localityName" "organizationName" "organizationalUnitName" "emailAddress" "commonName" "policy" "altName0" )
   export_params "${attribs[@]}"
 
   mkdir -p $client_dir/certs $client_dir/private $client_dir/chain
@@ -68,8 +74,8 @@ function create_client {
   cont $?
 
   prompt "signing client certificate for $name"
-  export_cnf $auth_name $auth_dir
-  openssl ca $batch_mode -config $ca_cnf -policy policy_loose -extensions client_cert -days $days -notext -in $auth_dir/csr/$name-csr.pem -out $client_dir/certs/$name-cert.pem
+  export_ca_dir $auth_dir
+  openssl ca $batch_mode -config $ca_cnf -extensions $extensions -days $days -notext -in $auth_dir/csr/$name-csr.pem -out $client_dir/certs/$name-cert.pem
   cont $?
 
   chmod 400 $client_dir/private/$name-key.pem
@@ -89,7 +95,7 @@ function revoke_server {
   fi
 
   prompt "revoking server certificate for $name"
-  export_cnf $auth_name $auth_dir
+  export_ca_dir $auth_dir
   openssl ca $batch_mode -config $ca_cnf $auth_passin -revoke $srv_dir/certs/$name-cert.pem
   cont $?
   update_crl $auth_name
@@ -104,7 +110,7 @@ function revoke_client {
   fi
 
   prompt "revoking client certificate for $name"
-  export_cnf $auth_name $auth_dir
+  export_ca_dir $auth_dir
   openssl ca $batch_mode -config $ca_cnf $auth_passin -revoke $client_dir/certs/$name-cert.pem
   cont $?
   update_crl $auth_name

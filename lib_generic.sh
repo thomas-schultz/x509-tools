@@ -46,7 +46,8 @@ function cont {
 }
 
 function export_params {
-  list=("${@}")
+  default=( "countryName" "stateOrProvinceName" "localityName" "organizationName" "organizationalUnitName" "emailAddress" "commonName" "policy")
+  list=("${default[@]}" "${@}")
   for param in "${list[@]}"; do
     eval "val=\$$param"
     if [ -z "$val" ] && [ -z $batch_mode ]; then
@@ -57,17 +58,12 @@ function export_params {
       export "$param=$val"
     fi
   done
-  if [ -z $crlUrl ]; then
-    export crlUrl="www.example.com"
-  else
-    export "crlUrl=$crlUrl"
-    crlPoint="-extensions crl_ext"
-  fi
+  [ -z $crlUrl ] && export crlUrl="www.example.com" || export crlUrl="$crlUrl"
+  [ -z $policy ] && export policy="policy_loose"
 }
 
-function export_cnf {
-  export ca_name="$1"
-  export ca_dir="$2"
+function export_ca_dir {
+  export ca_dir="$1"
 }
 
 function convert_certs {

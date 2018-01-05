@@ -49,6 +49,7 @@ function show_usage {
   echo "    -p/--preset <file>            load presets from file"
   echo "    -i/--interactive              load presets from file"
   echo "    -b/--bits <number>            set key length"
+  echo "    -d/--days <number>            set validity period ind days"
   echo "    -pw/--passphrase <pw>         set passphrase for private key"
   echo "    -cp/--ca-passphrase <pw>      passphrase for private key of authority"
   echo "    --ca-cnf <file>               openssl config for CAs"
@@ -81,13 +82,13 @@ while [ "$1" != "" ]; do
       ;;
     -pw | --passphrase)
       pw=$2 && shift
-      passout="-passout pass:$pw"
-      passin="-passin pass:$pw"
-      auth_passin="-passin pass:$pw"
+      passout="-passout pass:'$pw'"
+      passin="-passin pass:'$pw'"
+      auth_passin="-passin pass:'$pw'"
       ;;
     -cp | --ca-passphrase)
       auth_pw=$2 && shift
-      auth_passin="-passin pass:$auth_pw"
+      auth_passin="-passin pass:'$auth_pw'"
       ;;
     --ca-cnf)
       ca_cnf=$2 && shift
@@ -102,28 +103,28 @@ while [ "$1" != "" ]; do
       pkcs12=$2 && shift
       ;;
     -C)
-      countryName=$VALUE
+      export countryName="$VALUE"
       ;;
     -ST)
-      stateOrProvinceName=$VALUE
+      export stateOrProvinceName="$VALUE"
       ;;
     -L)
-      localityName=$VALUE
+      export localityName="$VALUE"
       ;;
     -O)
-      organizationName=$VALUE
+      export organizationName="$VALUE"
       ;;
     -OU)
-      organizationalUnitName=$VALUE
+      export organizationalUnitName="$VALUE"
       ;;
     -CN)
-      commonName=$VALUE
+      export commonName="$VALUE"
       ;;
     -@)
-      emailAddress=$VALUE
+      export emailAddress="$VALUE"
       ;;
     -CRL)
-      export "crlUrl=$VALUE"
+      export crlUrl="$VALUE"
       ;;
     -DNS)
       export "altName$subjaltname_count=$VALUE"
@@ -131,6 +132,13 @@ while [ "$1" != "" ]; do
       ;;
     -b | --bits)
       bits=$2 && shift
+      ;;
+    -d | --days)
+      days=$2 && shift
+      ca_days=$days
+      intm_days=$days
+      srv_days=$days
+      client_days=$days
       ;;
     -h | --help)
       show_usage && exit 0
