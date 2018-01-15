@@ -22,16 +22,15 @@ function create_server {
   cont $?
 
   prompt "creating server certificate for '$name'"
-  openssl req $batch_mode -config $srv_cnf -key $srv_dir/private/$name-key.pem $passin -new -out $auth_dir/csr/$name-csr.pem
+  insert_san_to_cnf $srv_cnf $name
+  openssl req $batch_mode -config $tmp_cnf -key $srv_dir/private/$name-key.pem $passin -new -out $auth_dir/csr/$name-csr.pem
   cont $?
+  openssl req -in $auth_dir/csr/A-csr.pem -text -noout > $auth_dir/csr/$name-csr.txt
 
-  prompt "setting subjectAltNames of certificate request for $name"
-  openssl asn1parse -inform PEM -in $auth_dir/csr/$name-csr.pem > $auth_dir/csr/$name-csr.txt
-  echo "$auth_dir/csr/$name-csr.txt"
+  prompt "extracting subjectAltNames from CSR for $name"
   tmp_cnf="${name}-tmp.cnf"
   cp $ca_cnf ./$tmp_cnf
-  # extract subjectAltNames from csr file and append it to the configuration
-  sed -n '/X509v3 Subject Alternative Name/{n;p;}' $auth_dir/csr/$name-csr.txt | awk '{ print "DNS." ++count[$6] " = " substr($7,2) }' >> $tmp_cnf
+  extract_san_from_csr $tmp_cnf $auth_dir/csr/$name-csr.txt
 
   prompt "signing server certificate for $name with CA '$auth_dir'"
   export_ca_dir $auth_dir

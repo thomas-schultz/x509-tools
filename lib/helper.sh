@@ -1,7 +1,11 @@
 #!/bin/bash
 
 function read_presets {
-  [ -e "$preset" ] || return
+  [ -z "$1" ] && return
+  if [ ! -e "$1" ]; then
+    echo "no such file or diretory: $preset"
+    exit 2
+  fi
   while IFS="=" read -r line; do
     if [ -z "$line" ] || [[ "$line" =~ ^\#.* ]]; then
       continue
@@ -64,6 +68,35 @@ function export_params {
 
 function export_ca_dir {
   export ca_dir="$1"
+}
+
+function insert_san_to_cnf {
+  cnf="$1"
+  name="$2"
+  san="${3:-DNS}"
+
+  tmp_cnf="${name}-tmp.cnf"
+  cp $1 ./$tmp_cnf
+  count=1
+  while true; do
+    dns="altName$count"
+    eval "val=\$$dns"
+    [ -z "$val" ] && break
+    count=$(( count + 1 ))
+    echo "$san.${count} = $val" >> $tmp_cnf
+  done
+}
+
+function extract_san_from_csr {
+  cnf="$1"
+  csr=$2
+  san="${3:-DNS}"
+  list=`grep DNS $csr | sed -e 's/DNS:/\n/g' | sed 's/,//g'`
+  count=0
+  for dns in $list; do
+    echo "$san.$count = $dns" >> $cnf
+    count=$(( count + 1 ))
+  done
 }
 
 function convert_certs {
