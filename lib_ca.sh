@@ -7,9 +7,9 @@ function create_ca {
   bits="${bits:-$ca_bits}"
   days="${days:-$ca_days}"
   policy="policy_strict"
-  extensions="v3_ca"
+  extension="v3_ca"
 
-  [ -z $crlUrl ] || extensions="${extensions}_crl"
+  [ -z $crlUrl ] || extension="${extension}_crl"
   export_params
   export_ca_dir $ca_dir
 
@@ -31,7 +31,7 @@ function create_ca {
 
   # create root certificate
   prompt "creating root certificate"
-  openssl req $batch_mode -config $ca_cnf -extensions $extensions -key $ca_dir/private/key.pem $passin -new -x509 -days $days -out $ca_dir/certs/cert.pem
+  openssl req $batch_mode -config $ca_cnf -extensions $extension -key $ca_dir/private/key.pem $passin -new -x509 -days $days -out $ca_dir/certs/cert.pem
   cont $?
 
   chmod 400 $ca_dir/private/key.pem
@@ -62,9 +62,9 @@ function create_intermediate {
   bits="${bits:-$intm_bits}"
   days="${days:-$intm_days}"
   policy="policy_loose"
-  extensions="v3_intermediate_ca"
+  extension="v3_intermediate_ca"
 
-  [ -z $crlUrl ] || extensions="${extensions}_crl"
+  [ -z $crlUrl ] || extension="${extension}_crl"
   export_params
   export_ca_dir $intm_dir
 
@@ -92,7 +92,7 @@ function create_intermediate {
 
   prompt "signing intermediate certificate with CA '$auth_dir'"
   export_ca_dir $auth_dir
-  openssl ca $batch_mode -config $ca_cnf -extensions $extensions $auth_passin -days $days -notext -in $intm_dir/csr/csr.pem -out $intm_dir/certs/cert.pem
+  openssl ca $batch_mode -config $ca_cnf -extensions $extension $auth_passin -days $days -notext -in $intm_dir/csr/csr.pem -out $intm_dir/certs/cert.pem
   cont $?
 
   chmod 400 $intm_dir/private/key.pem

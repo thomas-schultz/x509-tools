@@ -10,7 +10,7 @@ function create_server {
   bits="${bits:-$srv_bits}"
   days="${days:-$srv_days}"
   policy="policy_moderate"
-  extensions="server_cert"
+  extension="server_cert"
 
   attribs=( "altName0" )
   export_params "${attribs[@]}"
@@ -36,8 +36,7 @@ function create_server {
   prompt "signing server certificate for $name with CA '$auth_dir'"
   export_ca_dir $auth_dir
   echo "$auth_dir/private/key.pem"
-  echo "openssl ca $batch_mode -config $tmp_cnf -extensions $extensions $auth_passin -days $days -notext -in $auth_dir/csr/$name-csr.pem -out $srv_dir/certs/$name-cert.pem"
-  openssl ca $batch_mode -config $tmp_cnf -extensions $extensions $auth_passin -days $days -notext -in $auth_dir/csr/$name-csr.pem -out $srv_dir/certs/$name-cert.pem
+  openssl ca $batch_mode -config $tmp_cnf -extensions $extension $auth_passin -days $days -notext -in $auth_dir/csr/$name-csr.pem -out $srv_dir/certs/$name-cert.pem
   cont $?
   rm $tmp_cnf
 
@@ -59,7 +58,7 @@ function create_client {
   bits="${bits:-$client_bits}"
   days="${days:-$client_days}"
   policy="policy_moderate"
-  extensions="client_cert"
+  extension="client_cert"
 
   attribs=( "countryName" "stateOrProvinceName" "localityName" "organizationName" "organizationalUnitName" "emailAddress" "commonName" "policy" "altName0" )
   export_params "${attribs[@]}"
@@ -75,7 +74,7 @@ function create_client {
 
   prompt "signing client certificate for $name"
   export_ca_dir $auth_dir
-  openssl ca $batch_mode -config $ca_cnf -extensions $extensions -days $days -notext -in $auth_dir/csr/$name-csr.pem -out $client_dir/certs/$name-cert.pem
+  openssl ca $batch_mode -config $ca_cnf -extensions $extension -days $days -notext -in $auth_dir/csr/$name-csr.pem -out $client_dir/certs/$name-cert.pem
   cont $?
 
   chmod 400 $client_dir/private/$name-key.pem
