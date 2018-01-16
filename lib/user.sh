@@ -22,24 +22,21 @@ function create_server {
   cont $?
 
   prompt "creating server certificate for '$name'"
-  insert_san_to_cnf $srv_cnf $name
+  tmp_cnf=$(insert_san_to_cnf $srv_cnf $name)
   openssl req $batch_mode -config $tmp_cnf -key $srv_dir/private/$name-key.pem $passin -new -out $auth_dir/csr/$name-csr.pem
   cont $?
-  openssl req -in $auth_dir/csr/A-csr.pem -text -noout > $auth_dir/csr/$name-csr.txt
+  openssl req -in $auth_dir/csr/$name-csr.pem -text -noout > $auth_dir/csr/$name-csr.txt
 
   prompt "extracting subjectAltNames from CSR for $name"
-  tmp_cnf="${name}-tmp.cnf"
-  cp $ca_cnf ./$tmp_cnf
-  extract_san_from_csr $tmp_cnf $auth_dir/csr/$name-csr.txt
+  tmp_cnf=$(extract_san_from_csr $ca_cnf $name $auth_dir/csr/$name-csr.txt)
 
   prompt "signing server certificate for $name with CA '$auth_dir'"
   export_ca_dir $auth_dir
-  echo "$auth_dir/private/key.pem"
   openssl ca $batch_mode -config $tmp_cnf -extensions $extension $auth_passin -days $days -notext -in $auth_dir/csr/$name-csr.pem -out $srv_dir/certs/$name-cert.pem
   cont $?
-  rm $tmp_cnf
 
   chmod 400 $srv_dir/private/$name-key.pem
+  rm $tmp_cnf
 
   cp $auth_dir/certs/chain.pem $srv_dir/chain/$name-chain.pem
 
@@ -68,15 +65,21 @@ function create_client {
   cont $?
 
   prompt "creating client certificate for $name"
-  openssl req $batch_mode -config $client_cnf -new -key $client_dir/private/$name-key.pem -out $intm_dir/csr/$name-csr.pem
+  tmp_cnf=$(insert_san_to_cnf $srv_cnf $name)
+  openssl req $batch_mode -config $tmp_cnf -new -key $client_dir/private/$name-key.pem -out $intm_dir/csr/$name-csr.pem
   cont $?
+  openssl req -in $auth_dir/csr/$name-csr.pem -text -noout > $auth_dir/csr/$name-csr.txt
+
+  prompt "extracting subjectAltNames from CSR for $name"
+  tmp_cnf=$(extract_san_from_csr $ca_cnf $name $auth_dir/csr/$name-csr.txt)
 
   prompt "signing client certificate for $name"
   export_ca_dir $auth_dir
-  openssl ca $batch_mode -config $ca_cnf -extensions $extension -days $days -notext -in $auth_dir/csr/$name-csr.pem -out $client_dir/certs/$name-cert.pem
+  openssl ca $batch_mode -config $tmp_cnf -extensions $extension -days $days -notext -in $auth_dir/csr/$name-csr.pem -out $client_dir/certs/$name-cert.pem
   cont $?
 
   chmod 400 $client_dir/private/$name-key.pem
+  rm $tmp_cnf
 
   cp $auth_dir/certs/chain.pem $client_dir/chain/$name-chain.pem
 

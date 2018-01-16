@@ -71,8 +71,8 @@ function export_ca_dir {
 }
 
 function insert_san_to_cnf {
-  cnf="$1"
-  name="$2"
+  cnf=$1
+  name=$2
   san="${3:-DNS}"
 
   tmp_cnf="${name}-tmp.cnf"
@@ -85,18 +85,24 @@ function insert_san_to_cnf {
     count=$(( count + 1 ))
     echo "$san.${count} = $val" >> $tmp_cnf
   done
+  echo "$tmp_cnf"
 }
 
 function extract_san_from_csr {
-  cnf="$1"
-  csr=$2
-  san="${3:-DNS}"
+  cnf=$1
+  name=$2
+  csr=$3
+  san="${4:-DNS}"
+
+  tmp_cnf="${name}-tmp.cnf"
+  cp $cnf ./$tmp_cnf
   list=`grep DNS $csr | sed -e 's/DNS:/\n/g' | sed 's/,//g'`
   count=0
   for dns in $list; do
-    echo "$san.$count = $dns" >> $cnf
+    echo "$san.$count = $dns" >> $tmp_cnf
     count=$(( count + 1 ))
   done
+  echo "$tmp_cnf"
 }
 
 function convert_certs {

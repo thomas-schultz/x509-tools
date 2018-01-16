@@ -110,7 +110,7 @@ function create_intermediate {
   update_crl $name
 
   prompt "creating certificate chain"
-  cat $auth_dir/certs/chain.pem $intm_dir/certs/cert.pem > $intm_dir/certs/chain.pem
+  cat $intm_dir/certs/cert.pem $auth_dir/certs/chain.pem > $intm_dir/certs/chain.pem
   puts "$intm_dir/certs/chain.pem"
   openssl x509 -outform der -in $intm_dir/certs/chain.pem -out $intm_dir/certs/chain.crt
   puts "$intm_dir/certs/chain.crt"
