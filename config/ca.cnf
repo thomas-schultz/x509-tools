@@ -130,25 +130,26 @@ crlDistributionPoints           = URI:$ENV::crlUrl
 [ server_cert ]
 # Extensions for server certificates (`man x509v3_config`).
 basicConstraints                = CA:FALSE
-nsCertType                      = server
-nsComment                       = "OpenSSL Generated Server Certificate"
+#nsCertType                      = server
+#nsComment                       = "OpenSSL Generated Server Certificate"
 subjectKeyIdentifier            = hash
 authorityKeyIdentifier          = keyid,issuer:always
 keyUsage                        = critical, digitalSignature, keyEncipherment
 extendedKeyUsage                = serverAuth
-authorityInfoAccess             = OCSP;URI:http://localhost:8888
+#authorityInfoAccess             = OCSP;URI:http://localhost:8888
 subjectAltName                  = @alt_names
 
 
 [ client_cert ]
 # Extensions for client certificates (`man x509v3_config`).
 basicConstraints                = CA:FALSE
-nsCertType                      = client, email
-nsComment                       = "OpenSSL Generated Client Certificate"
+#nsCertType                      = client, email
+#nsComment                       = "OpenSSL Generated Client Certificate"
 subjectKeyIdentifier            = hash
 authorityKeyIdentifier          = keyid,issuer
 keyUsage                        = critical, nonRepudiation, digitalSignature, keyEncipherment
 extendedKeyUsage                = clientAuth, emailProtection
+#authorityInfoAccess             = OCSP;URI:http://localhost:8888
 subjectAltName                  = @alt_names
 
 
