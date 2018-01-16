@@ -2,14 +2,16 @@
 
 function create_ca {
   name="${1:-root}"
+  type="root-ca"
   ca_dir="$name-ca"
   bits="${bits:-$ca_bits}"
   days="${days:-$ca_days}"
+  policy="policy_strict"
+  extension="v3_ca"
 
-  attribs=( "countryName" "stateOrProvinceName" "localityName" "organizationName" "organizationalUnitName" "emailAddress" "commonName")
-  export_params "${attribs[@]}"
-  echo "export_cnf $name $ca_dir"
-  export_cnf $name $ca_dir
+  [ -z $crlUrl ] || extension="${extension}_crl"
+  export_params
+  export_ca_dir $ca_dir
 
   # create root-ca folders
   mkdir -p $ca_dir/
@@ -20,7 +22,7 @@ function create_ca {
   touch $ca_dir/index.txt.attr
   $rand > $ca_dir/serial
   $rand > $ca_dir/crlnumber
-  echo "Root-CA" > $ca_dir/type
+  echo $type > $ca_dir/type
 
   # create root-CA private key:
   prompt "creating root private key"
@@ -29,8 +31,13 @@ function create_ca {
 
   # create root certificate
   prompt "creating root certificate"
-  openssl req $batch_mode -config $ca_cnf -key $ca_dir/private/key.pem $passin -new -x509 -days $days -extensions v3_ca $crlPoint -out $ca_dir/certs/cert.pem
+  openssl req $batch_mode -config $ca_cnf -extensions $extension -key $ca_dir/private/key.pem $passin -new -x509 -days $days -out $ca_dir/certs/cert.pem
   cont $?
+
+  # create ocsp certificate
+  prompt "creating root certificate"
+  openssl req $batch_mode -config $ca_cnf -extensions v3_ocsp -new -nodes -keyout $ca_dir/private/ocsp.pem -out $ca_dir/csr/ocsp.csr
+  openssl ca $batch_mode -config $ca_cnf -extensions v3_ocsp $auth_passin -in $ca_dir/csr/ocsp.csr -out $ca_dir/csr/ocsp.pem
 
   chmod 400 $ca_dir/private/key.pem
 
@@ -53,14 +60,18 @@ function create_ca {
 function create_intermediate {
   auth_dir="${1:-root-ca}"
   auth_name=`echo $auth_dir | awk -F'-' '{print $1}'`
+  auth_type=`cat $auth_dir/type`
   name="${2:-intermediate}"
+  type="intermediate-ca"
   intm_dir="$name-ca"
-  bits="${bits:-$ca_bits}"
-  days="${days:-$ca_days}"
+  bits="${bits:-$intm_bits}"
+  days="${days:-$intm_days}"
+  policy="policy_loose"
+  extension="v3_intermediate_ca"
 
-  attribs=( "countryName" "stateOrProvinceName" "localityName" "organizationName" "organizationalUnitName" "emailAddress" "commonName")
-  export_params "${attribs[@]}"
-  export_cnf $name $ca_dir
+  [ -z $crlUrl ] || extension="${extension}_crl"
+  export_params
+  export_ca_dir $intm_dir
 
   # create intermediate folder
   mkdir -p $intm_dir
@@ -71,7 +82,7 @@ function create_intermediate {
   touch $intm_dir/index.txt.attr
   $rand > $intm_dir/serial
   $rand > $intm_dir/crlnumber
-  echo "Intermediate-CA" > $intm_dir/type
+  echo $type > $intm_dir/type
 
   # create intermediate private key
   prompt "creating intermediate private key"
@@ -83,9 +94,10 @@ function create_intermediate {
   openssl req $batch_mode -config $ca_cnf -key $intm_dir/private/key.pem $passin -new -out $intm_dir/csr/csr.pem
   cont $?
 
+
   prompt "signing intermediate certificate with CA '$auth_dir'"
-  export_cnf $auth_name $auth_dir
-  openssl ca $batch_mode -config $ca_cnf $auth_passin -days $days -extensions v3_intermediate_ca $crlPoint -notext -in $intm_dir/csr/csr.pem -out $intm_dir/certs/cert.pem
+  export_ca_dir $auth_dir
+  openssl ca $batch_mode -config $ca_cnf -extensions $extension $auth_passin -days $days -notext -in $intm_dir/csr/csr.pem -out $intm_dir/certs/cert.pem
   cont $?
 
   chmod 400 $intm_dir/private/key.pem
@@ -98,18 +110,19 @@ function create_intermediate {
   update_crl $name
 
   prompt "creating certificate chain"
-  cat $auth_dir/certs/chain.pem $intm_dir/certs/cert.pem > $intm_dir/certs/chain.pem
+  cat $intm_dir/certs/cert.pem $auth_dir/certs/chain.pem > $intm_dir/certs/chain.pem
   puts "$intm_dir/certs/chain.pem"
   openssl x509 -outform der -in $intm_dir/certs/chain.pem -out $intm_dir/certs/chain.crt
   puts "$intm_dir/certs/chain.crt"
 }
 
 function update_crl {
-  name="${1:-root}"
+  ca_name="${1:-root}"
   ca_dir="$name-ca"
+  ca_type=`cat $ca_dir/type`
 
   prompt "updating revocation list of CA '$ca_dir'"
-  export_cnf $name $ca_dir
+  export_ca_dir $ca_dir
   openssl ca $batch_mode -config $ca_cnf $auth_passin -gencrl -out $ca_dir/crl/crl.pem
   cont $?
   puts "$ca_dir/crl/crl.pem"
@@ -124,7 +137,7 @@ function revoke_ca {
   revoke_name=`echo $revoke_dir | awk -F'-' '{print $1}'`
 
   prompt "revoking intermediate '$revoke_dir' of CA '$ca_dir'"
-  export_cnf $ca_name $ca_dir
+  export_ca_dir $ca_dir
   export_nil
   openssl ca $batch_mode -config $ca_cnf $auth_passin -revoke $revoke_dir/certs/cert.pem
   cont $?

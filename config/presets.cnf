@@ -8,4 +8,4 @@ organizationalUnitName  = OU
 emailAddress            = mail@domain.tld
 commonName              = CN
 altName0                = subjectAltName
-crlUrl                  = www.domain.tld
+crlUrl                  = www.domain.tld/crl.pem

@@ -9,8 +9,10 @@ function create_server {
   fi
   bits="${bits:-$srv_bits}"
   days="${days:-$srv_days}"
+  policy="policy_moderate"
+  extension="server_cert"
 
-  attribs=( "countryName" "stateOrProvinceName" "localityName" "organizationName" "organizationalUnitName" "emailAddress" "commonName" "altName0" )
+  attribs=( "altName0" )
   export_params "${attribs[@]}"
 
   mkdir -p $srv_dir/certs $srv_dir/private $srv_dir/chain
@@ -20,24 +22,21 @@ function create_server {
   cont $?
 
   prompt "creating server certificate for '$name'"
-  openssl req $batch_mode -config $srv_cnf -key $srv_dir/private/$name-key.pem $passin -new -out $auth_dir/csr/$name-csr.pem
+  tmp_cnf=$(insert_san_to_cnf $srv_cnf $name)
+  openssl req $batch_mode -config $tmp_cnf -key $srv_dir/private/$name-key.pem $passin -new -out $auth_dir/csr/$name-csr.pem
   cont $?
+  openssl req -in $auth_dir/csr/$name-csr.pem -text -noout > $auth_dir/csr/$name-csr.txt
 
-  prompt "setting subjectAltNames of certificate request for $name"
-  openssl asn1parse -inform PEM -in $auth_dir/csr/$name-csr.pem > $auth_dir/csr/$name-csr.txt
-  echo "$auth_dir/csr/$name-csr.txt"
-  tmp_cnf="${name}-tmp.cnf"
-  cp $ca_cnf ./$tmp_cnf
-  # extract subjectAltNames from csr file and append it to the configuration
-  sed -n '/X509v3 Subject Alternative Name/{n;p;}' $auth_dir/csr/$name-csr.txt | awk '{ print "DNS." ++count[$6] " = " substr($7,2) }' >> $tmp_cnf
+  prompt "extracting subjectAltNames from CSR for $name"
+  tmp_cnf=$(extract_san_from_csr $ca_cnf $name $auth_dir/csr/$name-csr.txt)
 
   prompt "signing server certificate for $name with CA '$auth_dir'"
-  export_cnf $auth_name $auth_dir
-  openssl ca $batch_mode -config $tmp_cnf $auth_passin -policy policy_moderate -extensions server_cert -days $days -notext -in $auth_dir/csr/$name-csr.pem -out $srv_dir/certs/$name-cert.pem
+  export_ca_dir $auth_dir
+  openssl ca $batch_mode -config $tmp_cnf -extensions $extension $auth_passin -days $days -notext -in $auth_dir/csr/$name-csr.pem -out $srv_dir/certs/$name-cert.pem
   cont $?
-  rm $tmp_cnf
 
   chmod 400 $srv_dir/private/$name-key.pem
+  rm $tmp_cnf
 
   cp $auth_dir/certs/chain.pem $srv_dir/chain/$name-chain.pem
 
@@ -54,8 +53,10 @@ function create_client {
   fi
   bits="${bits:-$client_bits}"
   days="${days:-$client_days}"
+  policy="policy_moderate"
+  extension="client_cert"
 
-  attribs=( "countryName" "stateOrProvinceName" "localityName" "organizationName" "organizationalUnitName" "emailAddress" "commonName" "altName0" )
+  attribs=( "countryName" "stateOrProvinceName" "localityName" "organizationName" "organizationalUnitName" "emailAddress" "commonName" "policy" "altName0" )
   export_params "${attribs[@]}"
 
   mkdir -p $client_dir/certs $client_dir/private $client_dir/chain
@@ -64,15 +65,21 @@ function create_client {
   cont $?
 
   prompt "creating client certificate for $name"
-  openssl req $batch_mode -config $client_cnf -new -key $client_dir/private/$name-key.pem -out $intm_dir/csr/$name-csr.pem
+  tmp_cnf=$(insert_san_to_cnf $srv_cnf $name)
+  openssl req $batch_mode -config $tmp_cnf -new -key $client_dir/private/$name-key.pem -out $intm_dir/csr/$name-csr.pem
   cont $?
+  openssl req -in $auth_dir/csr/$name-csr.pem -text -noout > $auth_dir/csr/$name-csr.txt
+
+  prompt "extracting subjectAltNames from CSR for $name"
+  tmp_cnf=$(extract_san_from_csr $ca_cnf $name $auth_dir/csr/$name-csr.txt)
 
   prompt "signing client certificate for $name"
-  export_cnf $auth_name $auth_dir
-  openssl ca $batch_mode -config $ca_cnf -policy policy_loose -extensions client_cert -days $days -notext -in $auth_dir/csr/$name-csr.pem -out $client_dir/certs/$name-cert.pem
+  export_ca_dir $auth_dir
+  openssl ca $batch_mode -config $tmp_cnf -extensions $extension -days $days -notext -in $auth_dir/csr/$name-csr.pem -out $client_dir/certs/$name-cert.pem
   cont $?
 
   chmod 400 $client_dir/private/$name-key.pem
+  rm $tmp_cnf
 
   cp $auth_dir/certs/chain.pem $client_dir/chain/$name-chain.pem
 
@@ -89,7 +96,7 @@ function revoke_server {
   fi
 
   prompt "revoking server certificate for $name"
-  export_cnf $auth_name $auth_dir
+  export_ca_dir $auth_dir
   openssl ca $batch_mode -config $ca_cnf $auth_passin -revoke $srv_dir/certs/$name-cert.pem
   cont $?
   update_crl $auth_name
@@ -104,7 +111,7 @@ function revoke_client {
   fi
 
   prompt "revoking client certificate for $name"
-  export_cnf $auth_name $auth_dir
+  export_ca_dir $auth_dir
   openssl ca $batch_mode -config $ca_cnf $auth_passin -revoke $client_dir/certs/$name-cert.pem
   cont $?
   update_crl $auth_name

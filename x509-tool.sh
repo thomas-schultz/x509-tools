@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # load libs
-source "${BASH_SOURCE%/*}/lib_generic.sh"
-source "${BASH_SOURCE%/*}/lib_ca.sh"
-source "${BASH_SOURCE%/*}/lib_user.sh"
+source "${BASH_SOURCE%/*}/lib/helper.sh"
+source "${BASH_SOURCE%/*}/lib/ca.sh"
+source "${BASH_SOURCE%/*}/lib/user.sh"
 
 
 # set validation times
@@ -19,9 +19,9 @@ srv_bits=2048
 client_bits=2048
 
 # openssl config files
-ca_cnf="ca.cnf"
-srv_cnf="server.cnf"
-client_cnf="client.cnf"
+ca_cnf="config/ca.cnf"
+srv_cnf="config/server.cnf"
+client_cnf="config/client.cnf"
 
 # set default for all options
 srv_dir="server"
@@ -49,8 +49,9 @@ function show_usage {
   echo "    -p/--preset <file>            load presets from file"
   echo "    -i/--interactive              load presets from file"
   echo "    -b/--bits <number>            set key length"
-  echo "    -pw/--passphrase <pw>         set passphrase for private key"
-  echo "    -cp/--ca-passphrase <pw>      passphrase for private key of authority"
+  echo "    -d/--days <number>            set validity period ind days"
+  echo "    --passphrase <pw>             set passphrase for private key encryption"
+  echo "    -pw <pw>                      passphrase for decryption of private key"
   echo "    --ca-cnf <file>               openssl config for CAs"
   echo "    --server-cnf <file>           openssl config for server certificates"
   echo "    --client-cnf <file>           openssl config for client certificates"
@@ -79,13 +80,13 @@ while [ "$1" != "" ]; do
     -i | --interactive)
       batch_mode=""
       ;;
-    -pw | --passphrase)
+    --passphrase)
       pw=$2 && shift
       passout="-passout pass:$pw"
       passin="-passin pass:$pw"
       auth_passin="-passin pass:$pw"
       ;;
-    -cp | --ca-passphrase)
+    -pw)
       auth_pw=$2 && shift
       auth_passin="-passin pass:$auth_pw"
       ;;
@@ -102,35 +103,42 @@ while [ "$1" != "" ]; do
       pkcs12=$2 && shift
       ;;
     -C)
-      countryName=$VALUE
+      export countryName="$VALUE"
       ;;
     -ST)
-      stateOrProvinceName=$VALUE
+      export stateOrProvinceName="$VALUE"
       ;;
     -L)
-      localityName=$VALUE
+      export localityName="$VALUE"
       ;;
     -O)
-      organizationName=$VALUE
+      export organizationName="$VALUE"
       ;;
     -OU)
-      organizationalUnitName=$VALUE
+      export organizationalUnitName="$VALUE"
       ;;
     -CN)
-      commonName=$VALUE
+      export commonName="$VALUE"
       ;;
     -@)
-      emailAddress=$VALUE
+      export emailAddress="$VALUE"
       ;;
     -CRL)
-      export "crlUrl=$VALUE"
+      export crlUrl="$VALUE"
       ;;
     -DNS)
-      export "altName$subjaltname_count=$VALUE"
+      export "altName${subjaltname_count}=$VALUE"
       subjaltname_count=$(( subjaltname_count + 1 ))
       ;;
     -b | --bits)
       bits=$2 && shift
+      ;;
+    -d | --days)
+      days=$2 && shift
+      ca_days=$days
+      intm_days=$days
+      srv_days=$days
+      client_days=$days
       ;;
     -h | --help)
       show_usage && exit 0
@@ -148,7 +156,7 @@ done
 
 function main {
   action=$1 && shift
-  read_presets
+  read_presets $preset
   case "$action" in
     create)
       create $*

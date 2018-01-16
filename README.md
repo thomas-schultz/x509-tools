@@ -16,11 +16,12 @@ Usage: ./x509-tool.sh [<options>] <command> <subcommand>
     -p/--preset <file>            load presets from file
     -i/--interactive              load presets from file
     -b/--bits <number>            set key length
-    -pw/--passphrase <pw>         set passphrase for private key
-    -cp/--ca-passphrase <pw>          passphrase for private key of authority
+    -d/--days <number>            set validity period ind days
+    --passphrase <pw>             set passphrase for private key encryption
+    -pw <pw>                      passphrase for decryption of private key
     --ca-cnf <file>               openssl config for CAs
     --server-cnf <file>           openssl config for server certificates
     --client-cnf <file>           openssl config for client certificates
     --pkcs12 <pw>                 export client/server certs to pkcs12 file
-    -KEY=VALUE                    C/ST/L/O/OU/CN/@/DNS
+    -KEY=VALUE                    C/ST/L/O/OU/CN/@/CRL/DNS
 ```
