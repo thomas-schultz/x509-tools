@@ -24,7 +24,9 @@ countryName_default             = $ENV::countryName
 stateOrProvinceName_default     = $ENV::stateOrProvinceName
 localityName_default            = $ENV::localityName
 0.organizationName_default      = $ENV::organizationName
+organizationalUnitName_default  = $ENV::organizationalUnitName
 commonName_default              = $ENV::commonName
+emailAddress_default            = $ENV::emailAddress
 0.subjectAltName_default        = $ENV::altName0
 
 
