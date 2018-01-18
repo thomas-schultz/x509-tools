@@ -98,6 +98,8 @@ function create_intermediate {
   chmod 400 $intm_dir/private/key.pem
 
   prompt "exporting intermediate certificate"
+  openssl x509 -outform der -in $intm_dir/certs/cert.pem -out $intm_dir/certs/cert.crt
+  puts "$intm_dir/certs/cert.crt"
   openssl x509 -noout -text -in $intm_dir/certs/cert.pem > $intm_dir/certs/cert.txt
   puts "$intm_dir/certs/cert.txt"
   chmod 444 $intm_dir/certs/cert.*
