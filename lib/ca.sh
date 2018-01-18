@@ -121,6 +121,8 @@ function update_crl {
   openssl ca $batch_mode -config $ca_cnf $auth_passin -gencrl -out $ca_dir/crl/crl.pem
   cont $?
   puts "$ca_dir/crl/crl.pem"
+  openssl crl -in $ca_dir/crl/crl.pem -outform der -out $ca_dir/crl/crl.crt
+  puts "$ca_dir/crl/crl.crt"
   openssl crl -in $ca_dir/crl/crl.pem -noout -text > $ca_dir/crl/crl.txt
   puts "$ca_dir/crl/crl.pem"
 }
