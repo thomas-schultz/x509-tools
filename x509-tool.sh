@@ -55,7 +55,7 @@ function show_usage {
   echo "    --ca-cnf <file>               openssl config for CAs"
   echo "    --server-cnf <file>           openssl config for server certificates"
   echo "    --client-cnf <file>           openssl config for client certificates"
-  echo "    --pkcs12 <pw>                 export client/server certs to pkcs12 file"
+  echo "    --pkcs12                      export client/server certs to pkcs12 file"
   echo "    -KEY=VALUE                    C/ST/L/O/OU/CN/@/CRL/DNS"
 }
 
@@ -85,6 +85,7 @@ while [ "$1" != "" ]; do
       passout="-passout pass:$pw"
       passin="-passin pass:$pw"
       auth_passin="-passin pass:$pw"
+      pkcs12_passout="-passout pass:$pw"
       ;;
     -pw)
       auth_pw=$2 && shift
@@ -100,7 +101,7 @@ while [ "$1" != "" ]; do
       client_cnf=$2 && shift
       ;;
     --pkcs12)
-      pkcs12=$2 && shift
+      pkcs12=1
       ;;
     -C)
       export countryName="$VALUE"

@@ -12,6 +12,7 @@ function create_server {
   policy="policy_moderate"
   extension="server_cert"
 
+  [ -z $crlUrl ] || extension="${extension}_crl"
   attribs=( "altName0" )
   export_params "${attribs[@]}"
 
@@ -56,7 +57,8 @@ function create_client {
   policy="policy_moderate"
   extension="client_cert"
 
-  attribs=( "countryName" "stateOrProvinceName" "localityName" "organizationName" "organizationalUnitName" "emailAddress" "commonName" "policy" "altName0" )
+  [ -z $crlUrl ] || extension="${extension}_crl"
+  attribs=( "altName0" )
   export_params "${attribs[@]}"
 
   mkdir -p $client_dir/certs $client_dir/private $client_dir/chain
@@ -65,8 +67,8 @@ function create_client {
   cont $?
 
   prompt "creating client certificate for $name"
-  tmp_cnf=$(insert_san_to_cnf $srv_cnf $name)
-  openssl req $batch_mode -config $tmp_cnf -new -key $client_dir/private/$name-key.pem -out $intm_dir/csr/$name-csr.pem
+  tmp_cnf=$(insert_san_to_cnf $client_cnf $name)
+  openssl req $batch_mode -config $tmp_cnf -new -key $client_dir/private/$name-key.pem -out $auth_dir/csr/$name-csr.pem
   cont $?
   openssl req -in $auth_dir/csr/$name-csr.pem -text -noout > $auth_dir/csr/$name-csr.txt
 
@@ -84,7 +86,7 @@ function create_client {
   cp $auth_dir/certs/chain.pem $client_dir/chain/$name-chain.pem
 
   convert_certs $client_dir $name
-  [ -z $pkcs12 ] || export_pkcs12 $srv_dir $name
+  [ -z $pkcs12 ] || export_pkcs12 $client_dir $name
 }
 
 function revoke_server {
@@ -121,8 +123,8 @@ function export_pkcs12 {
   dir=$1
   name=$2
 
-  prompt "exporting to pkcs12 format (pw: '$pkcs12')"
-  openssl pkcs12 -export -passout pass:$pkcs12 -inkey $dir/private/$name-key.pem -in $dir/certs/$name-cert.pem -certfile $dir/chain/$name-chain.pem -out $dir/$name.p12
+  prompt "exporting to pkcs12 format"
+  openssl pkcs12 -export $pkcs12_passout -inkey $dir/private/$name-key.pem -in $dir/certs/$name-cert.pem -certfile $dir/chain/$name-chain.pem -out $dir/$name.p12
   cont $?
   puts "$dir/$name.p12"
 }
