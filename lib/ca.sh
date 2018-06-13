@@ -115,8 +115,12 @@ function create_intermediate {
 
 function update_crl {
   ca_name="${1:-root}"
-  ca_dir="$name-ca"
+  ca_dir="$ca_name-ca"
   ca_type=`cat $ca_dir/type`
+
+  policy="policy_strict"
+  read_presets "config/presets.cnf"
+  export_params
 
   prompt "updating revocation list of CA '$ca_dir'"
   export_ca_dir $ca_dir
@@ -126,7 +130,7 @@ function update_crl {
   openssl crl -in $ca_dir/crl/crl.pem -outform der -out $ca_dir/crl/crl.crt
   puts "$ca_dir/crl/crl.crt"
   openssl crl -in $ca_dir/crl/crl.pem -noout -text > $ca_dir/crl/crl.txt
-  puts "$ca_dir/crl/crl.pem"
+  puts "$ca_dir/crl/crl.text"
 }
 
 function revoke_ca {
