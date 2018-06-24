@@ -49,6 +49,29 @@ source: https://github.com/thomas-schultz/x509-tools
     server <name>               revokes a server certificate
                                 (name can be folder or serial)
 
+options:
+    -h/--help               shows this output
+    -v/--verbose            verbose output
+    -i/--interactive        load presets from file
+    -b/--bits <number>      set key length
+    -d/--days <number>      set validity period in days
+    -p/--policy <policy>    set the policy for the CA
+    --passin <pw>           set passphrase to unlock private key
+    --passout <pw>          set passphrase for private key
+    --pkcs12 <pw>           export client/server certs to pkcs12 file
+    -subj <subject>         set x509 subject as string "/KEY=value/.."
+    -KEY=value              allow to set individual variables
+        C:          countryName
+        ST:         stateOrProvinceName
+        L:          localityName
+        O:          organizationName
+        OU:         organizationalUnitName
+        CN:         commonName
+        DNS/SAN:    subjaltname
+        @/E:        emailAddress
+        CRL:        crlUrl
+        OCSP:       ocspUrl
+
 EOF
 }
 
@@ -57,7 +80,6 @@ if [ $# -eq 0 ]; then
 fi
 
 FIXEDARGS=()
-subjaltname_count=1
 # parse args
 while [ "$1" != "" ]; do
     PARAM=`echo $1 | awk -F= '{print $1}'`
@@ -83,36 +105,39 @@ while [ "$1" != "" ]; do
             pkcs12=$2 && shift
             pkcs12_passout="-passout pass:$pkcs12"
             ;;
+        -subj)
+            subj=$2 && shift
+            set_subject "$subj"
+            ;;
         -C)
-            export countryName="$VALUE"
+            set_value "countryName" "$VALUE"
             ;;
         -ST)
-            export stateOrProvinceName="$VALUE"
+            set_value "stateOrProvinceName" "$VALUE"
             ;;
         -L)
-            export localityName="$VALUE"
+            set_value "localityName" "$VALUE"
             ;;
         -O)
-            export organizationName="$VALUE"
+            set_value "organizationName" "$VALUE"
             ;;
         -OU)
-            export organizationalUnitName="$VALUE"
+            set_value "organizationalUnitName" "$VALUE"
             ;;
         -CN)
-            export commonName="$VALUE"
-            ;;
-        -@|-E)
-            export emailAddress="$VALUE"
-            ;;
-        -CRL)
-            export crlUrl="$VALUE"
-            ;;
-        -OCSP)
-            export ocspUrl="$VALUE"
+            set_value "commonName" "$VALUE"
             ;;
         -DNS|-SAN)
-            export "altName${subjaltname_count}=$VALUE"
-            subjaltname_count=$(( subjaltname_count + 1 ))
+            set_value "subjaltname" "$VALUE"
+            ;;
+        -@|-E)
+            set_value "emailAddress" "$VALUE"
+            ;;
+        -CRL)
+            set_value "crlUrl" "$VALUE"
+            ;;
+        -OCSP)
+            set_value "ocspUrl" "$VALUE"
             ;;
         -p|--policy)
             export policy=$2 && shift
@@ -135,7 +160,6 @@ while [ "$1" != "" ]; do
     esac
     shift
 done
-
 
 function main {
     action=$1 && shift
