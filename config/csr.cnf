@@ -1,0 +1,45 @@
+# OpenSSL client-certificate configuration file.
+
+[ ca ]
+default_ca              = ca_default
+
+[ req ]
+# Options for the `req` tool (`man req`).
+default_bits            = {{ keylength }}
+string_mask             = utf8only
+distinguished_name      = req_distinguished_name
+req_extensions          = v3_req
+
+
+[ req_distinguished_name ]
+# See <https://en.wikipedia.org/wiki/Certificate_signing_request>.
+countryName                     = Country Name (2 letter code)
+stateOrProvinceName             = State or Province Name
+localityName                    = Locality Name
+0.organizationName              = Organization Name
+organizationalUnitName          = Organizational Unit Name
+commonName                      = Common Name (required)
+0.subjectAltName                = Subject Alternative Name
+emailAddress                    = Email Address (required)
+
+# Optionally, specify some defaults.
+countryName_default             = {{ countryName }}
+stateOrProvinceName_default     = {{ stateOrProvinceName }}
+localityName_default            = {{ localityName }}
+0.organizationName_default      = {{ organizationName }}
+organizationalUnitName_default  = {{ organizationalUnitName }}
+emailAddress_default            = {{ emailAddress }}
+commonName_default              = {{ commonName }}
+0.subjectAltName                = {{ altName0 }}
+
+
+[ v3_req ]
+# Extensions to add to a certificate request
+basicConstraints                = CA:FALSE
+keyUsage                        = nonRepudiation, digitalSignature, keyEncipherment
+subjectAltName                  = @alt_names
+
+
+# do not move, file gets appended here
+[alt_names]
+DNS.0 = {{ commonName }}
