@@ -44,7 +44,7 @@ function create_ca {
     chmod 444 $ca_dir/certs/cert.*
 
     [ -z "$crlUrl" ] && update_crl $1
-    [ -z "$oscpUrl" ] && create_ocsp $1
+    [ -z "$ocspUrl" ] && create_ocsp $1
 }
 
 function create_sub_ca {
@@ -86,7 +86,7 @@ function create_intermediate_ca {
     [ -z $crlUrl ] && update_crl $issuer
 
     ca_dir="$sub_dir" # restores ca_dir to current
-    [ -z $oscpUrl ] && create_ocsp $ca_dir
+    [ -z $ocspUrl ] && create_ocsp $ca_dir
 
     prompt "converting CA certificate files to DER and Text form"
     openssl x509 -outform der -in $ca_dir/certs/cert.pem -out $ca_dir/certs/cert.crt
@@ -128,7 +128,7 @@ function create_ocsp {
     openssl ca $batch_mode -config $ca_cnf -extensions "v3_ocsp" $passedout -days $crl_days -notext -in $ca_dir/csr/ocsp.pem -out $ca_dir/certs/ocsp.pem
     cont $?
 
-    prompt "converting OSCP certificate files to DER and Text form"
+    prompt "converting OCSP certificate files to DER and Text form"
     openssl x509 -outform der -in $ca_dir/certs/ocsp.pem -out $ca_dir/certs/ocsp.der
     puts "$ca_dir/certs/ocsp.der"
     openssl x509 -noout -text -in $ca_dir/certs/ocsp.pem > $ca_dir/certs/ocsp.txt
