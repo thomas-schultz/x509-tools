@@ -45,6 +45,7 @@ function create_ca {
 
     [ -z "$crlUrl" ] && update_crl $1
     [ -z "$ocspUrl" ] && create_ocsp $1
+    puts "done"
 }
 
 function create_sub_ca {
