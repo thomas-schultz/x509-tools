@@ -9,7 +9,7 @@ declare -A defaults=( \
         ["policy"]="policy_strict" \
     )
 
-subjaltname_count=1
+subjaltname_count=0
 
 function set_value {
     key=$1
@@ -208,7 +208,7 @@ function append_sans {
     cp "./config/csr.cnf" "$cnf"
 
     template_config "$cnf"
-    count=1
+    count=0
     [ -z "$altName$count" ] &&  sed -i '/subjectAltName/d' "$cnf"
     while true; do
         dns="altName$count"
@@ -227,7 +227,7 @@ function extract_san_from_csr {
 
     cp "$ca_cnf" "$cnf"
     list=`grep -i $san $csr | sed -e "s/$san:/\n/g" | sed 's/,//g'`
-    count=1
+    count=0
     for dns in $list; do
         echo "$san.$count = $dns" >> $tmp_cnf
         count=$(( count + 1 ))
