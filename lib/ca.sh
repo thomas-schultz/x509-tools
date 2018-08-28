@@ -43,9 +43,12 @@ function create_ca {
     puts "$ca_dir/certs/cert.txt"
     chmod 444 $ca_dir/certs/cert.*
 
-    [ -z "$crlUrl" ] && update_crl $1
-    [ -z "$ocspUrl" ] && create_ocsp $1
-    puts "done"
+    if [ ! -z "$crlUrl" ]; then
+        update_crl $1
+    fi
+    if [ ! -z "$ocspUrl" ]; then
+        create_ocsp $1
+    fi
 }
 
 function create_sub_ca {
@@ -84,10 +87,14 @@ function create_intermediate_ca {
     openssl ca $batch_mode -config $issuer_cnf -extensions $extension $passin -days $ca_days -notext -in $sub_dir/csr/csr.pem -out $sub_dir/certs/cert.pem
     cont $?
 
-    [ -z $crlUrl ] && update_crl $issuer
+    if [ ! -z "$crlUrl" ]; then
+        update_crl $issuer
+    fi
 
     ca_dir="$sub_dir" # restores ca_dir to current
-    [ -z $ocspUrl ] && create_ocsp $ca_dir
+    if [ ! -z "$ocspUrl" ]; then
+        create_ocsp $ca_dir
+    fi
 
     prompt "converting CA certificate files to DER and Text form"
     openssl x509 -outform der -in $ca_dir/certs/cert.pem -out $ca_dir/certs/cert.crt
@@ -124,7 +131,7 @@ function create_ocsp {
     chmod 400 $ca_dir/private/ocsp-key.pem
 
     prompt "signing OCSP certificate with CA '$ca_dir'"
-    
+
     puts "openssl ca $batch_mode -config $ca_cnf -extensions "v3_ocsp" $passedout -days $crl_days -notext -in $ca_dir/csr/ocsp.pem -out $ca_dir/certs/ocsp.pem"
     openssl ca $batch_mode -config $ca_cnf -extensions "v3_ocsp" $passedout -days $crl_days -notext -in $ca_dir/csr/ocsp.pem -out $ca_dir/certs/ocsp.pem
     cont $?
@@ -172,12 +179,12 @@ function revoke_ca {
 function info_ca {
     use_ca $1
 
-	issuer=`openssl x509 -in $ca_dir/certs/cert.pem -noout -issuer`
-	subject=`openssl x509 -in $ca_dir/certs/cert.pem -noout -subject`
-	notbefore=`openssl x509 -in $ca_dir/certs/cert.pem -noout -dates | head -n1`
-	notafter=`openssl x509 -in $ca_dir/certs/cert.pem -noout -dates | tail -n1`
+    issuer=`openssl x509 -in $ca_dir/certs/cert.pem -noout -issuer`
+    subject=`openssl x509 -in $ca_dir/certs/cert.pem -noout -subject`
+    notbefore=`openssl x509 -in $ca_dir/certs/cert.pem -noout -dates | head -n1`
+    notafter=`openssl x509 -in $ca_dir/certs/cert.pem -noout -dates | tail -n1`
 
-	echo "###############################"
+    echo "###############################"
     echo "CA: $ca_dir"
     echo "###############################"
     printf "  %s\n" "$subject"
