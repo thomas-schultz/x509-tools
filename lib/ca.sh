@@ -123,7 +123,7 @@ function create_ocsp {
 
     prompt "creating OCSP certificate for '$ca_dir'"
     tmp_cnf="$ca_cnf.ocsp"
-    sed -E 's/(commonName_default\s+)= (.*)/\1=OCSP for \2/g' "$ca_cnf" > "$tmp_cnf"
+    sed -E 's/(commonName_default\s+)= (.*)/\1=OCSP_for_\2/g' "$ca_cnf" > "$tmp_cnf"
     puts "openssl req $batch_mode -config $tmp_cnf -new -key $ca_dir/private/ocsp-key.pem $passedout -out $ca_dir/csr/ocsp.pem"
     openssl req $batch_mode -config $tmp_cnf -new -key $ca_dir/private/ocsp-key.pem $passedout -out $ca_dir/csr/ocsp.pem
     cont $?
