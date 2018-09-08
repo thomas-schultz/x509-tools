@@ -40,8 +40,6 @@ function create_user_certificate {
     prompt "extracting subjectAltNames from CSR for $name"
     extract_san_from_csr "$tmp_cnf" "$ca_dir/csr/$name-csr.txt"
 
-    echo "days: $cert_days"
-
     prompt "signing server certificate for $name with CA '$ca_dir'"
     puts "openssl ca $batch_mode -config $tmp_cnf -extensions $extension $passin -days $cert_days -notext -in $ca_dir/csr/$name-csr.pem -out $ca_dir/user_certs/$name/cert.pem"
     openssl ca $batch_mode -config $tmp_cnf -extensions $extension $passin -days $cert_days -notext -in $ca_dir/csr/$name-csr.pem -out $ca_dir/user_certs/$name/cert.pem
