@@ -132,12 +132,15 @@ function template_config {
     done <<< "$vars"
 
     # clean up entries if they are empty
-    if [ -z $crlUrl ]; then
+    if [ -z "$crlUrl" ]; then
         sed -i -E "/.*crl_info.*/d" $template
         sed -i -E "/.*issuer_info.*/d" $template
     fi
-    if [ -z $ocspUrl ]; then
+    if [ -z "$ocspUrl" ]; then
         sed -i -E "/.*ocsp_info.*/d" $template
+    fi
+    if [ -z "$issuerUrl" ]; then
+        sed -i -E "/.*issuer_info.*/d" $template
     fi
 }
 
