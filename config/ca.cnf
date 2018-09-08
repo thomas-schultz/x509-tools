@@ -57,6 +57,16 @@ organizationalUnitName  = optional
 commonName              = supplied
 emailAddress            = supplied
 
+[ policy_ocsp ]
+# Allow the CA to sign a more diverse range of certificates
+countryName             = optional
+stateOrProvinceName     = optional
+localityName            = optional
+organizationName        = optional
+organizationalUnitName  = optional
+commonName              = supplied
+emailAddress            = optional
+
 
 [ req ]
 # Options for the `req` tool (`man req`).

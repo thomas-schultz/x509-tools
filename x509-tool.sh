@@ -27,9 +27,9 @@ source: https://github.com/thomas-schultz/x509-tools
 
  create <type>:     creates x509 certificates
     ca <folder>                 Root-CA
-    subca <folder> <issuer>     Intermediate CA signed by
+    subca <folder>              Intermediate CA signed by
                                 the CA of the <issuer> folder
-    endca <folder> <issuer>     Intermediate End-CA signed by
+    endca <folder>              Intermediate End-CA signed by
                                 the CA of the <issuer> folder
     server <name> <issuer>      server certificate (according to ca.cnf)
     client <name> <issuer>      client certificate (according to ca.cnf)
@@ -262,13 +262,13 @@ function list {
 
     case "$type" in
         ca)
-			if [ -t $1 ]; then
-				for file in `find . -name "presets.cnf"`; do
-					info_ca `dirname $file`
-				done
-			else
-				info_ca $1
-			fi
+            if [ -t $1 ]; then
+                for file in `find . -name "presets.cnf"`; do
+                    info_ca `dirname $file`
+                done
+            else
+                info_ca $1
+            fi
             ;;
         *)
             echo "ERROR: unknown command 'list $type'" && exit 1
