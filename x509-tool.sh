@@ -71,6 +71,7 @@ options:
         @/E:        emailAddress
         CRL:        crlUrl
         OCSP:       ocspUrl
+        URL:        issuerUrl
 
 EOF
 }
@@ -138,6 +139,9 @@ while [ "$1" != "" ]; do
             ;;
         -OCSP)
             set_value "ocspUrl" "$VALUE"
+            ;;
+        -URL)
+            set_value "issuerUrl" "$VALUE"
             ;;
         -p|--policy)
             export policy=$2 && shift
