@@ -52,10 +52,11 @@ source: https://github.com/thomas-schultz/x509-tools
 options:
     -h/--help               shows this output
     -v/--verbose            verbose output
-    -i/--interactive        load presets from file
+    -i/--interactive        interactive user inputs
     -b/--bits <number>      set key length
     -d/--days <number>      set validity period in days
     -p/--policy <policy>    set the policy for the CA
+    --ask                   ask for passwords
     --passin <pw>           set passphrase to unlock private key
     --passout <pw>          set passphrase for private key
     --pkcs12 <pw>           export client/server certs to pkcs12 file
@@ -91,6 +92,9 @@ while [ "$1" != "" ]; do
             ;;
         -i | --interactive)
             batch_mode=""
+            ;;
+        --ask)
+            passout=" "
             ;;
         --passin)
             pw=$2 && shift
