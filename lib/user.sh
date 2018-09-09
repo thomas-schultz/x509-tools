@@ -60,7 +60,7 @@ function create_user_certificate {
     
     convert_certs "$ca_dir/user_certs/$name"
     if [ ! -z "$pkcs12" ]; then
-		export_pkcs12 "$ca_dir" "$name"
+		export_pkcs12 "$name" "$ca_dir"
 	fi
 }
 
@@ -90,8 +90,8 @@ function revoke_user_certificate {
 }
 
 function export_pkcs12 {
-    use_ca "$1" && shift
     name="$1" && shift
+    use_ca "$1" && shift
 
     prompt "exporting to pkcs12 format"
     puts "openssl pkcs12 -export $pkcs12_passout -inkey $ca_dir/user_certs/$name/key.pem -in $ca_dir/user_certs/$name/cert.pem -certfile $ca_dir/user_certs/$name/chain.pem -out $ca_dir/user_certs/$name.p12"

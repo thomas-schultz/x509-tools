@@ -34,6 +34,9 @@ source: https://github.com/thomas-schultz/x509-tools
     server <name> <issuer>      server certificate (according to ca.cnf)
     client <name> <issuer>      client certificate (according to ca.cnf)
 
+ export:			exports certificates in pkcs12 format
+    user <name> <issuer>        only works on existing certificates
+
  list <type>:       list x509 objects
     ca [<folder>]               lists all CAs or only the given one
 
@@ -184,6 +187,9 @@ function main {
         create)
             create $sub $*
             ;;
+        export)
+            export_cert $sub $*
+            ;;
         list)
             list $sub $*
             ;;
@@ -259,6 +265,20 @@ function create {
             ;;
         *)
             echo "ERROR: unknown command 'create $type'" && exit 1
+    esac
+}
+
+function export_cert {
+    type="$1" && shift
+
+    case "$type" in
+        user|client|server)
+            [ -z $1 ] && echo "ERROR: missing certificate name for 'export'" && exit 1
+            [ -z $2 ] && echo "ERROR: missing issuer path for 'export'" && exit 1
+            export_pkcs12 $*
+            ;;
+        *)
+            echo "ERROR: unknown command 'export $type'" && exit 1
     esac
 }
 
