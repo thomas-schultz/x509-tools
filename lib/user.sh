@@ -56,10 +56,12 @@ function create_user_certificate {
     else
         cp "$ca_dir/certs/cert.pem" "$ca_dir/user_certs/$name/chain.pem"
     fi
-    cp "$ca_dir/certs/ca.*.pem" "$ca_dir/user_certs/$name/"
+    cp "$ca_dir/certs/ca."*.pem "$ca_dir/user_certs/$name/"
     
     convert_certs "$ca_dir/user_certs/$name"
-    [ -z "$pkcs12" ] || export_pkcs12 "$ca_dir" "$name"
+    if [ ! -z "$pkcs12" ]; then
+		export_pkcs12 "$ca_dir" "$name"
+	fi
 }
 
 
@@ -84,7 +86,7 @@ function revoke_user_certificate {
     cont $?
 
     passedout="$passin" # hack to pass passphrase
-    update_crl $ca_dir
+    update_crl "$ca_dir"
 }
 
 function export_pkcs12 {

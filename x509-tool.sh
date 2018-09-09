@@ -95,6 +95,7 @@ while [ "$1" != "" ]; do
             ;;
         --ask)
             passout=" "
+            pkcs12=" "
             ;;
         --passin)
             pw=$2 && shift
