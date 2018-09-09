@@ -59,7 +59,7 @@ emailAddress            = supplied
 
 [ policy_ocsp ]
 # Allow the CA to sign a more diverse range of certificates
-countryName             = optional
+countryName             = match
 stateOrProvinceName     = optional
 localityName            = optional
 organizationName        = optional
