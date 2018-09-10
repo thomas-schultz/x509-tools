@@ -8,7 +8,7 @@ function define_ca {
 
     puts "creating directory $ca_dir"
     mkdir -p "$ca_dir/"
-    mkdir -p "$ca_dir/certs" "$ca_dir/crl" "$ca_dir/newcerts" "$ca_dir/csr" "$ca_dir/private"
+    mkdir -p "$ca_dir/certs" "$ca_dir/crl" "$ca_dir/ocsp" "$ca_dir/newcerts" "$ca_dir/csr" "$ca_dir/private"
     chmod 700 "$ca_dir/private"
     touch "$ca_dir/index.txt"
     touch "$ca_dir/index.txt.attr"
@@ -18,7 +18,7 @@ function define_ca {
 }
 
 function create_ca {
-	ca_dir="$1" && shift
+    ca_dir="$1" && shift
     prepare_ca "$ca_dir"
     extension="v3_ca"
 
@@ -112,10 +112,10 @@ function create_intermediate_ca {
     fi
     puts "$ca_dir/certs/chain.pem"
     cat "$ca_dir/certs/chain.pem" | \
-		awk 'split_after==1{n++;split_after=0} /-----END CERTIFICATE-----/ {split_after=1} \
-		{print > "'$ca_dir'/certs/ca." n+1 ".pem"}'
-	count=`grep -c "END CERTIFICATE" $ca_dir/certs/chain.pem`
-	puts "$ca_dir/certs/ca.[1-$count].pem"
+        awk 'split_after==1{n++;split_after=0} /-----END CERTIFICATE-----/ {split_after=1} \
+        {print > "'$ca_dir'/certs/ca." n+1 ".pem"}'
+    count=`grep -c "END CERTIFICATE" $ca_dir/certs/chain.pem`
+    puts "$ca_dir/certs/ca.[1-$count].pem"
     openssl x509 -outform der -in "$ca_dir/certs/chain.pem" -out "$ca_dir/certs/chain.der"
     puts "$ca_dir/certs/chain.der"
 }
@@ -124,32 +124,32 @@ function create_ocsp {
     prepare_ca "$1" && shift
 
     prompt "creating OCSP private key for '$ca_dir'"
-    openssl genrsa -out "$ca_dir/private/ocsp-key.pem" $cert_bits
+    openssl genrsa -out "$ca_dir/ocsp/key.pem" $cert_bits
     cont $?
 
     prompt "creating OCSP certificate for '$ca_dir'"
     tmp_cnf="$ca_cnf.ocsp"
     sed -E 's/(commonName_default\s+)= (.*)/\1=OCSP_for_\2/g' "$ca_cnf" > "$tmp_cnf"
-    puts "openssl req $batch_mode -config $tmp_cnf -new -key $ca_dir/private/ocsp-key.pem $passedout -out $ca_dir/csr/ocsp.pem"
-    openssl req $batch_mode -config "$tmp_cnf" -new -key "$ca_dir/private/ocsp-key.pem" $passedout -out "$ca_dir/csr/ocsp.pem"
+    puts "openssl req $batch_mode -config $tmp_cnf -new -key $ca_dir/ocsp/key.pem $passedout -out $ca_dir/csr/ocsp.pem"
+    openssl req $batch_mode -config "$tmp_cnf" -new -key "$ca_dir/ocsp/key.pem" $passedout -out "$ca_dir/csr/ocsp.pem"
     cont $?
 
     rm "$tmp_cnf"
-    chmod 400 "$ca_dir/private/ocsp-key.pem"
+    chmod 400 "$ca_dir/ocsp/key.pem"
 
     prompt "signing OCSP certificate with CA '$ca_dir'"
 
     sed -E 's/(policy\s+)= (.*)/\1= policy_ocsp/g' "$ca_cnf" > "$tmp_cnf"
-    puts "openssl ca $batch_mode -config $tmp_cnf -extensions "v3_ocsp" $passedout -days $crl_days -notext -in $ca_dir/csr/ocsp.pem -out $ca_dir/certs/ocsp.pem"
-    openssl ca $batch_mode -config "$tmp_cnf" -extensions "v3_ocsp" $passedout -days $crl_days -notext -in "$ca_dir/csr/ocsp.pem" -out "$ca_dir/certs/ocsp.pem"
+    puts "openssl ca $batch_mode -config $tmp_cnf -extensions "v3_ocsp" $passedout -days $crl_days -notext -in $ca_dir/csr/ocsp.pem -out $ca_dir/ocsp/cert.pem"
+    openssl ca $batch_mode -config "$tmp_cnf" -extensions "v3_ocsp" $passedout -days $crl_days -notext -in "$ca_dir/csr/ocsp.pem" -out "$ca_dir/ocsp/ocsp.pem"
     cont $?
 
     prompt "converting OCSP certificate files to DER and Text form"
-    openssl x509 -outform der -in "$ca_dir/certs/ocsp.pem" -out "$ca_dir/certs/ocsp.der"
-    puts "$ca_dir/certs/ocsp.der"
-    openssl x509 -noout -text -in "$ca_dir/certs/ocsp.pem" > "$ca_dir/certs/ocsp.txt"
-    puts "$ca_dir/certs/ocsp.txt"
-    chmod 444 "$ca_dir/certs/ocsp".*
+    openssl x509 -outform der -in "$ca_dir/ocsp/cert.pem" -out "$ca_dir/ocsp/cert.der"
+    puts "$ca_dir/ocsp/cert.der"
+    openssl x509 -noout -text -in "$ca_dir/ocsp/cert.pem" > "$ca_dir/ocsp/cert.txt"
+    puts "$ca_dir/ocsp/cert.txt"
+    chmod 444 "$ca_dir/ocsp/cert".*
 
     #openssl ocsp -index root-ca/index.txt -port 8888 -rsigner root-ca/certs/ocsp.pem -rkey root-ca/private/ocsp-key.pem -CA root-ca/certs/cert.pem -text -out log.txt
     #openssl ocsp -CAfile root-ca/certs/cert.pem -issuer root-ca/certs/cert.pem -cert root-ca/newcerts/1541EBB0B1586558.pem -url http://localhost:8888 -resp_text
