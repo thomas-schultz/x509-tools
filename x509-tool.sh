@@ -27,12 +27,15 @@ source: https://github.com/thomas-schultz/x509-tools
 
  create <type>:     creates x509 certificates
     ca <folder>                 Root-CA
-    subca <folder> <issuer>     Intermediate CA signed by
+    subca <folder>              Intermediate CA signed by
                                 the CA of the <issuer> folder
-    endca <folder> <issuer>     Intermediate End-CA signed by
+    endca <folder>              Intermediate End-CA signed by
                                 the CA of the <issuer> folder
     server <name> <issuer>      server certificate (according to ca.cnf)
     client <name> <issuer>      client certificate (according to ca.cnf)
+
+ export:			exports certificates in pkcs12 format
+    user <name> <issuer>        only works on existing certificates
 
  list <type>:       list x509 objects
     ca [<folder>]               lists all CAs or only the given one
@@ -52,10 +55,11 @@ source: https://github.com/thomas-schultz/x509-tools
 options:
     -h/--help               shows this output
     -v/--verbose            verbose output
-    -i/--interactive        load presets from file
+    -i/--interactive        interactive user inputs
     -b/--bits <number>      set key length
     -d/--days <number>      set validity period in days
     -p/--policy <policy>    set the policy for the CA
+    --ask                   ask for passwords
     --passin <pw>           set passphrase to unlock private key
     --passout <pw>          set passphrase for private key
     --pkcs12 <pw>           export client/server certs to pkcs12 file
@@ -71,6 +75,7 @@ options:
         @/E:        emailAddress
         CRL:        crlUrl
         OCSP:       ocspUrl
+        URL:        issuerUrl
 
 EOF
 }
@@ -90,6 +95,10 @@ while [ "$1" != "" ]; do
             ;;
         -i | --interactive)
             batch_mode=""
+            ;;
+        --ask)
+            passout=" "
+            pkcs12=" "
             ;;
         --passin)
             pw=$2 && shift
@@ -139,6 +148,9 @@ while [ "$1" != "" ]; do
         -OCSP)
             set_value "ocspUrl" "$VALUE"
             ;;
+        -URL)
+            set_value "issuerUrl" "$VALUE"
+            ;;
         -p|--policy)
             export policy=$2 && shift
             ;;
@@ -174,6 +186,9 @@ function main {
             ;;
         create)
             create $sub $*
+            ;;
+        export)
+            export_cert $sub $*
             ;;
         list)
             list $sub $*
@@ -253,18 +268,32 @@ function create {
     esac
 }
 
+function export_cert {
+    type="$1" && shift
+
+    case "$type" in
+        user|client|server)
+            [ -z $1 ] && echo "ERROR: missing certificate name for 'export'" && exit 1
+            [ -z $2 ] && echo "ERROR: missing issuer path for 'export'" && exit 1
+            export_pkcs12 $*
+            ;;
+        *)
+            echo "ERROR: unknown command 'export $type'" && exit 1
+    esac
+}
+
 function list {
     type="$1" && shift
 
     case "$type" in
         ca)
-			if [ -t $1 ]; then
-				for file in `find . -name "presets.cnf"`; do
-					info_ca `dirname $file`
-				done
-			else
-				info_ca $1
-			fi
+            if [ -t $1 ]; then
+                for file in `find . -name "presets.cnf"`; do
+                    info_ca `dirname $file`
+                done
+            else
+                info_ca $1
+            fi
             ;;
         *)
             echo "ERROR: unknown command 'list $type'" && exit 1
