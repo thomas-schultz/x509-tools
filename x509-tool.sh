@@ -1,10 +1,11 @@
 #!/bin/bash
 
 # load libs
-source "${BASH_SOURCE%/*}/lib/exitcodes.sh"
-source "${BASH_SOURCE%/*}/lib/helper.sh"
-source "${BASH_SOURCE%/*}/lib/ca.sh"
-source "${BASH_SOURCE%/*}/lib/user.sh"
+base="$( cd "$( dirname "${BASH_SOURCE[0]}" )" > /dev/null && pwd )"
+source "${base}/lib/exitcodes.sh"
+source "${base}/lib/helper.sh"
+source "${base}/lib/ca.sh"
+source "${base}/lib/user.sh"
 
 
 # args
@@ -34,7 +35,7 @@ source: https://github.com/thomas-schultz/x509-tools
     server <name> <issuer>      server certificate (according to ca.cnf)
     client <name> <issuer>      client certificate (according to ca.cnf)
 
- export:			exports certificates in pkcs12 format
+ export:            exports certificates in pkcs12 format
     user <name> <issuer>        only works on existing certificates
 
  list <type>:       list x509 objects
