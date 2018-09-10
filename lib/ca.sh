@@ -42,6 +42,7 @@ function create_ca {
     puts "$ca_dir/certs/cert.der"
     openssl x509 -noout -text -in "$ca_dir/certs/cert.pem" > "$ca_dir/certs/cert.txt"
     puts "$ca_dir/certs/cert.txt"
+    cp "$ca_dir/certs/cert.pem" "$ca_dir/certs/ca.1.pem"
     chmod 444 "$ca_dir/certs/cert".*
 
     if [ ! -z "$crlUrl" ]; then
