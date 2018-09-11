@@ -89,11 +89,15 @@ function create_intermediate_ca {
     openssl ca $batch_mode -config "$issuer_cnf" -extensions $extension $passin -days $ca_days -notext -in "$sub_dir/csr/csr.pem" -out "$sub_dir/certs/cert.pem"
     cont $?
 
+    # update crl of issuer
     if [ ! -z "$crlUrl" ]; then
         update_crl "$issuer"
     fi
 
     ca_dir="$sub_dir" # restores ca_dir to current
+    if [ ! -z "$crlUrl" ]; then
+        update_crl "$ca_dir"
+    fi
     if [ ! -z "$ocspUrl" ]; then
         create_ocsp "$ca_dir"
     fi
