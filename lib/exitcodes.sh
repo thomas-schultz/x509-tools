@@ -1,4 +1,0 @@
-#!/bin/bash
-
-EXIT_INVALID_CMD=2
-EXIT_DEFINED_CA=10

@@ -239,9 +239,9 @@ function extract_san_from_csr {
 }
 
 function convert_certs {
-  dir=$1
+  dir="$1"
   prompt "converting certificate to CRT and Text"
-  openssl x509 -outform der -in $dir/cert.pem -out $dir/cert.crt
+  openssl x509 -outform der -in $dir/cert.pem -out $dir/cert.crt 2>&1
   puts "$dir/cert.crt"
   openssl x509 -noout -text -in $dir/cert.pem > $dir/cert.txt
   puts "$dir/cert.txt"

@@ -21,7 +21,7 @@ function create_user_certificate {
     mkdir -p "$ca_dir/user_certs/$name/"
 
     prompt "creating private key for $name"
-    openssl genrsa -out "$ca_dir/user_certs/$name/key.pem" $keylength
+    eval openssl genrsa -out "$ca_dir/user_certs/$name/key.pem" $keylength $output_mode
     cont $?
 
     tmp_cnf="$ca_dir/user_certs/$name/cert.cnf"
@@ -30,10 +30,10 @@ function create_user_certificate {
 
     prompt "creating certificate request for '$name'"
     puts "openssl req $batch_mode -config $tmp_cnf -key $ca_dir/user_certs/$name/key.pem $passin -new -out $ca_dir/csr/$name-csr.pem"
-    openssl req $batch_mode -config "$tmp_cnf" -key "$ca_dir/user_certs/$name/key.pem" $passin -new -out "$ca_dir/csr/$name-csr.pem"
+    eval openssl req $batch_mode -config "$tmp_cnf" -key "$ca_dir/user_certs/$name/key.pem" $passin -new -out "$ca_dir/csr/$name-csr.pem" $output_mode
     cont $?
 
-    openssl req -in "$ca_dir/csr/$name-csr.pem" -text -noout > "$ca_dir/csr/$name-csr.txt"
+    eval openssl req -in "$ca_dir/csr/$name-csr.pem" -text -noout > "$ca_dir/csr/$name-csr.txt"
     puts "$ca_dir/csr/$name-csr.txt"
     rm "$tmp_cnf"
 
@@ -42,10 +42,10 @@ function create_user_certificate {
 
     prompt "signing server certificate for $name with CA '$ca_dir'"
     puts "openssl ca $batch_mode -config $tmp_cnf -extensions $extension $passin -days $cert_days -notext -in $ca_dir/csr/$name-csr.pem -out $ca_dir/user_certs/$name/cert.pem"
-    openssl ca $batch_mode -config "$tmp_cnf" -extensions $extension $passin -days $cert_days -notext -in "$ca_dir/csr/$name-csr.pem" -out "$ca_dir/user_certs/$name/cert.pem"
+    eval openssl ca $batch_mode -config "$tmp_cnf" -extensions $extension $passin -days $cert_days -notext -in "$ca_dir/csr/$name-csr.pem" -out "$ca_dir/user_certs/$name/cert.pem" $output_mode
     cont $?
 
-    openssl x509 -noout -text -in "$ca_dir/user_certs/$name/cert.pem" > "$ca_dir/user_certs/$name/cert.txt"
+    eval openssl x509 -noout -text -in "$ca_dir/user_certs/$name/cert.pem" > "$ca_dir/user_certs/$name/cert.txt"
     puts "$ca_dir/user_certs/$name/cert.txt"
 
     chmod 400 "$ca_dir/user_certs/$name/key.pem"
@@ -82,7 +82,7 @@ function revoke_user_certificate {
     fi
     echo $cert
     puts "openssl ca $batch_mode -config $ca_cnf $passin -revoke $cert"
-    openssl ca $batch_mode -config "$ca_cnf" $passin -revoke "$cert"
+    eval openssl ca $batch_mode -config "$ca_cnf" $passin -revoke "$cert" $output_mode
     cont $?
 
     passedout="$passin" # hack to pass passphrase
@@ -95,7 +95,7 @@ function export_pkcs12 {
 
     prompt "exporting to pkcs12 format"
     puts "openssl pkcs12 -export $pkcs12_passout -inkey $ca_dir/user_certs/$name/key.pem -in $ca_dir/user_certs/$name/cert.pem -certfile $ca_dir/user_certs/$name/chain.pem -out $ca_dir/user_certs/$name.p12"
-    openssl pkcs12 -export $pkcs12_passout -inkey "$ca_dir/user_certs/$name/key.pem" -in "$ca_dir/user_certs/$name/cert.pem" -certfile "$ca_dir/user_certs/$name/chain.pem" -out "$ca_dir/user_certs/$name.p12"
+    eval openssl pkcs12 -export $pkcs12_passout -inkey "$ca_dir/user_certs/$name/key.pem" -in "$ca_dir/user_certs/$name/cert.pem" -certfile "$ca_dir/user_certs/$name/chain.pem" -out "$ca_dir/user_certs/$name.p12" $output_mode
     cont $?
 
     echo "$pkcs12_passout" | sed 's/-passout pass://g' > "$ca_dir/user_certs/$name/export.pw"

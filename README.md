@@ -12,7 +12,7 @@ source: https://github.com/thomas-schultz/x509-tools
  define <type>:     defines or updates CA settings (presets.cnf)
     ca <folder>                 for Root-CAs
     subca <folder> <issuer>     for intermediate CAs
-    subca <folder> <issuer>     for intermediate CAs which are
+    endca <folder> <issuer>     for intermediate CAs which are
                                 not alowed to sign further CAs
 
  create <type>:     creates x509 certificates

@@ -9,7 +9,6 @@ if [ -z "$OPENSSL_CSR_CNF" ]; then
     OPENSSL_CSR_CNF="${base}/config/csr.cnf"
 fi
 
-source "${base}/lib/exitcodes.sh"
 source "${base}/lib/helper.sh"
 source "${base}/lib/ca.sh"
 source "${base}/lib/user.sh"
@@ -17,6 +16,7 @@ source "${base}/lib/user.sh"
 
 # args
 batch_mode="-batch"
+output_mode="2>/dev/null"
 
 # use as random generator
 rand="openssl rand -hex 8"
@@ -100,6 +100,7 @@ while [ "$1" != "" ]; do
     case $PARAM in
         -v | --verbose)
             verbose=1
+            output_mode="2>&1"
             ;;
         -i | --interactive)
             batch_mode=""
