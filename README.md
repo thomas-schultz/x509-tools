@@ -17,12 +17,15 @@ source: https://github.com/thomas-schultz/x509-tools
 
  create <type>:     creates x509 certificates
     ca <folder>                 Root-CA
-    subca <folder> <issuer>     Intermediate CA signed by
+    subca <folder>              Intermediate CA signed by
                                 the CA of the <issuer> folder
-    endca <folder> <issuer>     Intermediate End-CA signed by
+    endca <folder>              Intermediate End-CA signed by
                                 the CA of the <issuer> folder
     server <name> <issuer>      server certificate (according to ca.cnf)
     client <name> <issuer>      client certificate (according to ca.cnf)
+
+ export:            exports certificates in pkcs12 format
+    user <name> <issuer>        only works on existing certificates
 
  list <type>:       list x509 objects
     ca [<folder>]               lists all CAs or only the given one
@@ -42,10 +45,11 @@ source: https://github.com/thomas-schultz/x509-tools
 options:
     -h/--help               shows this output
     -v/--verbose            verbose output
-    -i/--interactive        load presets from file
+    -i/--interactive        interactive user inputs
     -b/--bits <number>      set key length
     -d/--days <number>      set validity period in days
     -p/--policy <policy>    set the policy for the CA
+    --ask                   ask for passwords
     --passin <pw>           set passphrase to unlock private key
     --passout <pw>          set passphrase for private key
     --pkcs12 <pw>           export client/server certs to pkcs12 file
@@ -60,4 +64,8 @@ options:
         DNS/SAN:    subjaltname
         @/E:        emailAddress
         CRL:        crlUrl
+        OCSP:       ocspUrl
+        URL:        issuerUrl
+
+```
 
