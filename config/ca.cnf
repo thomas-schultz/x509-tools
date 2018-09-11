@@ -148,7 +148,7 @@ authorityInfoAccess             = @ocsp_info
 
 
 [ server_cert ]
-basicConstraints                = CA:FALSE
+basicConstraints                = critical,CA:FALSE
 subjectKeyIdentifier            = hash
 authorityKeyIdentifier          = keyid,issuer:always
 keyUsage                        = critical,digitalSignature,keyEncipherment
@@ -158,7 +158,7 @@ authorityInfoAccess             = @ocsp_info
 subjectAltName                  = @alt_names
 
 [ client_cert ]
-basicConstraints                = CA:FALSE
+basicConstraints                = critical,CA:FALSE
 subjectKeyIdentifier            = hash
 authorityKeyIdentifier          = keyid,issuer
 keyUsage                        = critical, nonRepudiation, digitalSignature, keyEncipherment

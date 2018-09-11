@@ -2,6 +2,13 @@
 
 # load libs
 base="$( cd "$( dirname "${BASH_SOURCE[0]}" )" > /dev/null && pwd )"
+if [ -z "$OPENSSL_CA_CNF" ]; then
+    OPENSSL_CA_CNF="${base}/config/ca.cnf"
+fi
+if [ -z "$OPENSSL_CSR_CNF" ]; then
+    OPENSSL_CSR_CNF="${base}/config/csr.cnf"
+fi
+
 source "${base}/lib/exitcodes.sh"
 source "${base}/lib/helper.sh"
 source "${base}/lib/ca.sh"

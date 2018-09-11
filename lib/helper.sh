@@ -108,7 +108,7 @@ function prepare_config {
     printf "%-20s = %s\n" "issuer" "$issuer" >> $presets
 
     puts "creating config file $template"
-    cp "${base}/config/ca.cnf" "$template"
+    cp "$OPENSSL_CA_CNF" "$template"
     template_config "$template" "$presets"
 }
 
@@ -208,7 +208,7 @@ function append_sans {
     cnf="$1" && shift
     san="${1:-DNS}" && shift
 
-    cp "${base}/config/csr.cnf" "$cnf"
+    cp "$OPENSSL_CSR_CNF" "$cnf"
 
     template_config "$cnf"
     count=0

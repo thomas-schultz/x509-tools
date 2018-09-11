@@ -95,6 +95,7 @@ function create_intermediate_ca {
     fi
 
     ca_dir="$sub_dir" # restores ca_dir to current
+    passin=""
     if [ ! -z "$crlUrl" ]; then
         update_crl "$ca_dir"
     fi
