@@ -146,7 +146,7 @@ function create_ocsp {
 
     sed -E 's/(policy\s+)= (.*)/\1= policy_ocsp/g' "$ca_cnf" > "$tmp_cnf"
     puts "openssl ca $batch_mode -config $tmp_cnf -extensions "v3_ocsp" $passedout -days $crl_days -notext -in $ca_dir/csr/ocsp.pem -out $ca_dir/ocsp/cert.pem"
-    openssl ca $batch_mode -config "$tmp_cnf" -extensions "v3_ocsp" $passedout -days $crl_days -notext -in "$ca_dir/csr/ocsp.pem" -out "$ca_dir/ocsp/ocsp.pem"
+    openssl ca $batch_mode -config "$tmp_cnf" -extensions "v3_ocsp" $passedout -days $crl_days -notext -in "$ca_dir/csr/ocsp.pem" -out "$ca_dir/ocsp/cert.pem"
     cont $?
 
     prompt "converting OCSP certificate files to DER and Text form"
