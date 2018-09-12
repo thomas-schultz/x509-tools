@@ -127,6 +127,16 @@ function test_update_ca_crl {
     ./x509-tool.sh $verbose update ca root-ca --passin Password1 ; it $? ${FUNCNAME[0]}
 }
 
+function test_list_ca {
+    echo -e "\ntesting ${FUNCNAME[0]}\n"
+    ./x509-tool.sh $verbose list ca root-ca; it $? ${FUNCNAME[0]}
+}
+
+function test_list_subca {
+    echo -e "\ntesting ${FUNCNAME[0]}\n"
+    ./x509-tool.sh $verbose list subca sub-ca; it $? ${FUNCNAME[0]}
+}
+
 echo -e "\n#test $(date)" > $OUT
 
 test_create_ca
@@ -145,5 +155,7 @@ test_create_client_with_san
 test_create_client_with_two_sans
 test_revoke_client
 test_update_ca_crl
+test_list_ca
+test_list_subca
 
 cat $OUT

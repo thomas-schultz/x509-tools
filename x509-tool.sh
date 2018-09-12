@@ -10,6 +10,7 @@ if [ -z "$OPENSSL_CSR_CNF" ]; then
 fi
 
 source "${base}/lib/helper.sh"
+source "${base}/lib/openssl.sh"
 source "${base}/lib/ca.sh"
 source "${base}/lib/user.sh"
 
@@ -196,6 +197,9 @@ function main {
         create)
             create $sub $*
             ;;
+        request)
+            request $sub $*
+            ;;
         export)
             export_cert $sub $*
             ;;
@@ -277,6 +281,38 @@ function create {
     esac
 }
 
+function request {
+    type="$1" && shift
+    name="$1" && shift
+
+    case "$type" in
+        subca)
+            [ -z $bits ] || export ca_keylength=$bits
+            [ -z $days ] || export ca_days=$days
+            create_sub_ca $name
+            ;;
+        endca)
+            [ -z $bits ] || export ca_keylength=$bits
+            [ -z $days ] || export ca_days=$days
+            create_end_ca $name
+            ;;
+        server)
+            [ -z $bits ] || export cert_keylength=$bits
+            [ -z $days ] || export cert_days=$days
+            [ -z $1 ] && echo "ERROR: missing issuer path for 'create $type'" && exit 1
+            create_server_certificate $name $*
+            ;;
+        client)
+            [ -z $bits ] || export cert_keylength=$bits
+            [ -z $days ] || export cert_days=$days
+            [ -z $1 ] && echo "ERROR: missing issuer path for 'create $type'" && exit 1
+            create_client_certificate $name $*
+            ;;
+        *)
+            echo "ERROR: unknown command 'request $type'" && exit 1
+    esac
+}
+
 function export_cert {
     type="$1" && shift
 
@@ -295,7 +331,7 @@ function list {
     type="$1" && shift
 
     case "$type" in
-        ca)
+        ca|subca)
             if [ -t $1 ]; then
                 for file in `find . -name "presets.cnf"`; do
                     info_ca `dirname $file`
