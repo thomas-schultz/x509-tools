@@ -1,5 +1,7 @@
 # x509-tool - Create CA, Intermediate-CA, Server and Client Certificates
 
+[![pipeline status](https://gitlab.genua.de/tschultz/x509-tools/badges/master/pipeline.svg)](https://gitlab.genua.de/tschultz/x509-tools/commits/master)
+
 
 This tool is a wrapper for openssl written for linux bash.
 
