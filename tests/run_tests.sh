@@ -3,7 +3,6 @@
 . ./testtool.sh
 
 OUT="test.t"
-COUNT=1
 
 if [ "$1" == "-v" ]; then
     verbose="-v"
@@ -134,7 +133,7 @@ function test_list_ca {
 
 function test_list_subca {
     echo -e "\ntesting ${FUNCNAME[0]}\n"
-    ./x509-tool.sh $verbose list subca sub-ca; it $? ${FUNCNAME[0]}
+    ./x509-tool.sh $verbose list subca sub-ca; nit $? ${FUNCNAME[0]}
 }
 
 echo -e "\n#test $(date)" > $OUT
@@ -159,3 +158,5 @@ test_list_ca
 test_list_subca
 
 cat $OUT
+
+[ $GOOD -eq $COUNT ] && exit 0
