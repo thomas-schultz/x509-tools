@@ -6,5 +6,6 @@ stages:
 code test:
   stage: test
   script:
-    - ./tests/run-tests.sh -v
+    - ls -l
+    - "./tests/run-tests.sh -v"
 
