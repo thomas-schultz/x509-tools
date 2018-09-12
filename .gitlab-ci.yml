@@ -6,6 +6,5 @@ stages:
 code test:
   stage: test
   script:
-    - ls -l
-    - "/bin/bash $(pwd)/tests/run-tests.sh -v"
+    - "./tests/run_tests.sh -v"
 
