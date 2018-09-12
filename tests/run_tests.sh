@@ -1,5 +1,6 @@
 #!/bin/bash
 
+cd "${BASH_SOURCE%/*}" || exit
 . ./testtool.sh
 
 OUT="test.t"
@@ -133,7 +134,7 @@ function test_list_ca {
 
 function test_list_subca {
     echo -e "\ntesting ${FUNCNAME[0]}\n"
-    ./x509-tool.sh $verbose list subca sub-ca; nit $? ${FUNCNAME[0]}
+    ./x509-tool.sh $verbose list subca sub-ca; it $? ${FUNCNAME[0]}
 }
 
 echo -e "\n#test $(date)" > $OUT
