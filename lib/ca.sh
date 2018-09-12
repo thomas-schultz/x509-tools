@@ -22,30 +22,21 @@ function create_ca {
     prepare_ca "$ca_dir"
     extension="v3_ca"
 
-    # create root-CA private key:
-    prompt "creating CA private key"
-    [ -z "$passout" ] || key_passout="-aes256 $passout"
-    puts "openssl genrsa $key_passout -out $ca_dir/private/key.pem $ca_keylength"
-    eval openssl genrsa $key_passout -out "$ca_dir/private/key.pem" $ca_keylength $output_mode
-    cont $?
+    prompt "creating CA private key for '$ca_subj'"
+    create_private_key "$ca_dir/private" $ca_keylength
 
-    # create root certificate
-    prompt "creating CA certificate"
-    puts "openssl req $batch_mode -config $ca_cnf -extensions $extension -key $ca_dir/private/key.pem $passedout -new -x509 -days $ca_days -out $ca_dir/certs/cert.pem"
-    eval openssl req $batch_mode -config "$ca_cnf" -extensions $extension -key "$ca_dir/private/key.pem" $passedout -new -x509 -days $ca_days -out "$ca_dir/certs/cert.pem" $output_mode
-    cont $?
+    prompt "creating CA certificate for '$ca_subj'"
+    create_self_signed_ca "$ca_dir" "$ca_cnf" $ca_days $extension
 
-    chmod 400 "$ca_dir/private/key.pem"
+    protect_private_key "$ca_dir/private"
 
-    prompt "converting CA certificate files to DER and Text form"
-    eval openssl x509 -outform der -in "$ca_dir/certs/cert.pem" -out "$ca_dir/certs/cert.der" $output_mode
-    puts "$ca_dir/certs/cert.der"
-    eval openssl x509 -noout -text -in "$ca_dir/certs/cert.pem" > "$ca_dir/certs/cert.txt"
-    puts "$ca_dir/certs/cert.txt"
-    cp "$ca_dir/certs/cert.pem" "$ca_dir/certs/ca.1.pem"
-    chmod 444 "$ca_dir/certs/cert".*
+    prompt "converting CA certificate into DER and Text format"
+    convert_cert "$ca_dir/certs/cert.pem"
+
+    unfold_chain "$ca_dir/certs/cert.pem"
 
     if [ ! -z "$crlUrl" ]; then
+        prompt "creating revocation list for CA '$ca_subj'"
         update_crl "$ca_dir"
     fi
     if [ ! -z "$ocspUrl" ]; then
@@ -65,50 +56,31 @@ function create_end_ca {
 }
 
 function create_intermediate_ca {
-    prepare_ca "$1" && shift
+    ca_dir="$1" && shift
     extension="$1" && shift
 
-    # create intermediate private key
-    prompt "creating intermediate private key"
-    [ -z "$passout" ] || key_passout="-aes256 $passout"
-    puts "openssl genrsa $key_passout -out $ca_dir/private/key.pem $ca_keylength"
-    eval openssl genrsa $key_passout -out "$ca_dir/private/key.pem" $ca_keylength $output_mode
-    cont $?
+    prepare_ca "$ca_dir"
 
-    # create and sign intermediate certificate
-    prompt "creating intermediate certificate"
-    puts "openssl req $batch_mode -config $ca_cnf -extensions $extension -key $ca_dir/private/key.pem $passedout -new -out $ca_dir/csr/csr.pem"
-    eval openssl req $batch_mode -config "$ca_cnf" -extensions $extension -key "$ca_dir/private/key.pem" $passedout -new -out "$ca_dir/csr/csr.pem" $output_mode
-    cont $?
+    prompt "creating intermediate private key for '$ca_subj'"
+    create_private_key "$ca_dir/private" $ca_keylength
 
-    chmod 400 "$ca_dir/private/key.pem"
+    prompt "creating intermediate certificate signing request towards '$issuer_subj'"
+    create_ca_csr "$ca_dir" "$ca_cnf" $extension
 
-    prompt "signing intermediate certificate with CA '$issuer'"
-    prepare_issuer "$issuer"
-    puts "openssl ca $batch_mode -config $issuer_cnf -extensions $extension $passin -days $ca_days -notext -in $sub_dir/csr/csr.pem -out $sub_dir/certs/cert.pem"
-    eval openssl ca $batch_mode -config "$issuer_cnf" -extensions $extension $passin -days $ca_days -notext -in "$sub_dir/csr/csr.pem" -out "$sub_dir/certs/cert.pem" $output_mode
-    cont $?
+    protect_private_key "$ca_dir/private"
 
-    # update crl of issuer
+    prompt "signing intermediate certificate with CA '$issuer_subj'"
+    sign_ca_csr "$ca_dir" $extension
+
     if [ ! -z "$crlUrl" ]; then
-        update_crl "$issuer"
-    fi
-
-    ca_dir="$sub_dir" # restores ca_dir to current
-    passin=""
-    if [ ! -z "$crlUrl" ]; then
+        prompt "update revocation list for issuer CA '$ca_subj'"
         update_crl "$ca_dir"
     fi
-    if [ ! -z "$ocspUrl" ]; then
-        create_ocsp "$ca_dir"
-    fi
 
-    prompt "converting CA certificate files to DER and Text form"
-    eval openssl x509 -outform der -in "$ca_dir/certs/cert.pem" -out "$ca_dir/certs/cert.der" $output_mode
-    puts "$ca_dir/certs/cert.der"
-    eval openssl x509 -noout -text -in "$ca_dir/certs/cert.pem" > "$ca_dir/certs/cert.txt"
-    puts "$ca_dir/certs/cert.txt"
-    chmod 444 "$ca_dir/certs/cert".*
+    restore_ca
+
+    prompt "converting CA certificate into DER and Text format"
+    convert_cert "$ca_dir/certs/cert.pem"
 
     prompt "creating certificate chain"
     if [ -e "$issuer_dir/certs/chain.pem" ]; then
@@ -117,81 +89,57 @@ function create_intermediate_ca {
         cat "$ca_dir/certs/cert.pem" "$issuer_dir/certs/cert.pem" > "$ca_dir/certs/chain.pem"
     fi
     puts "$ca_dir/certs/chain.pem"
-    cat "$ca_dir/certs/chain.pem" | \
-        awk 'split_after==1{n++;split_after=0} /-----END CERTIFICATE-----/ {split_after=1} \
-        {print > "'$ca_dir'/certs/ca." n+1 ".pem"}'
-    count=`grep -c "END CERTIFICATE" $ca_dir/certs/chain.pem`
-    puts "$ca_dir/certs/ca.[1-$count].pem"
-    eval openssl x509 -outform der -in "$ca_dir/certs/chain.pem" -out "$ca_dir/certs/chain.der" $output_mode
-    puts "$ca_dir/certs/chain.der"
+
+    prompt "unfolding certificate chain"
+    unfold_chain "$ca_dir/certs/chain.pem"
+
+    if [ ! -z "$crlUrl" ]; then
+        prompt "update revocation list for CA '$ca_subj'"
+        update_crl "$ca_dir"
+    fi
+    if [ ! -z "$ocspUrl" ]; then
+        create_ocsp "$ca_dir"
+    fi
 }
 
 function create_ocsp {
-    prepare_ca "$1" && shift
+    ca_dir="$1" && shift
 
-    prompt "creating OCSP private key for '$ca_dir'"
-    eval openssl genrsa -out "$ca_dir/ocsp/key.pem" $cert_bits $output_mode
-    cont $?
+    prepare_ca "$ca_dir" && shift
 
-    prompt "creating OCSP certificate for '$ca_dir'"
-    tmp_cnf="$ca_cnf.ocsp"
-    sed -E 's/(commonName_default\s+)= (.*)/\1=OCSP_for_\2/g' "$ca_cnf" > "$tmp_cnf"
-    puts "openssl req $batch_mode -config $tmp_cnf -new -key $ca_dir/ocsp/key.pem $passedout -out $ca_dir/csr/ocsp.pem"
-    eval openssl req $batch_mode -config "$tmp_cnf" -new -key "$ca_dir/ocsp/key.pem" $passedout -out "$ca_dir/csr/ocsp.pem" $output_mode
-    cont $?
+    prompt "creating OCSP private key for '$ca_subj'"
+    create_private_key "$ca_dir/ocsp" $cert_bits
 
-    rm "$tmp_cnf"
-    chmod 400 "$ca_dir/ocsp/key.pem"
+    prompt "creating OCSP certificate for '$ca_subj'"
+    create_ocsp_csr "$ca_dir" "$ca_cnf"
 
-    prompt "signing OCSP certificate with CA '$ca_dir'"
+    protect_private_key "$ca_dir/ocsp/"
 
-    sed -E 's/(policy\s+)= (.*)/\1= policy_ocsp/g' "$ca_cnf" > "$tmp_cnf"
-    puts "openssl ca $batch_mode -config $tmp_cnf -extensions "v3_ocsp" $passedout -days $crl_days -notext -in $ca_dir/csr/ocsp.pem -out $ca_dir/ocsp/cert.pem"
-    eval openssl ca $batch_mode -config "$tmp_cnf" -extensions "v3_ocsp" $passedout -days $crl_days -notext -in "$ca_dir/csr/ocsp.pem" -out "$ca_dir/ocsp/cert.pem" $output_mode
-    cont $?
+    prompt "signing OCSP certificate with CA '$ca_subj'"
+    sign_ocsp_csr "$ca_dir" $crl_days
 
-    prompt "converting OCSP certificate files to DER and Text form"
-    eval openssl x509 -outform der -in "$ca_dir/ocsp/cert.pem" -out "$ca_dir/ocsp/cert.der" $output_mode
-    puts "$ca_dir/ocsp/cert.der"
-    eval openssl x509 -noout -text -in "$ca_dir/ocsp/cert.pem" > "$ca_dir/ocsp/cert.txt"
-    puts "$ca_dir/ocsp/cert.txt"
-    chmod 444 "$ca_dir/ocsp/cert".*
-
-    #openssl ocsp -index root-ca/index.txt -port 8888 -rsigner root-ca/certs/ocsp.pem -rkey root-ca/private/ocsp-key.pem -CA root-ca/certs/cert.pem -text -out log.txt
-    #openssl ocsp -CAfile root-ca/certs/cert.pem -issuer root-ca/certs/cert.pem -cert root-ca/newcerts/1541EBB0B1586558.pem -url http://localhost:8888 -resp_text
-}
-
-function update_crl {
-    prepare_ca "$1" && shift
-
-    prompt "updating revocation list of CA '$ca_dir'"
-    [ -z "$passin" ] && passin="$passedout"
-    puts "openssl ca $batch_mode -config $ca_cnf $passin -gencrl -out $ca_dir/crl/crl.pem"
-    eval openssl ca $batch_mode -config "$ca_cnf" $passin -gencrl -out "$ca_dir/crl/crl.pem" $output_mode
-    cont $?
-
-    puts "$ca_dir/crl/crl.pem"
-    eval openssl crl -in "$ca_dir/crl/crl.pem" -outform der -out "$ca_dir/crl/crl.der" $output_mode
-    puts "$ca_dir/crl/crl.der"
-    eval openssl crl -in "$ca_dir/crl/crl.pem" -noout -text > "$ca_dir/crl/crl.txt"
-    puts "$ca_dir/crl/crl.txt"
+    prompt "converting OCSP certificate into DER and Text format"
+    convert_cert "$ca_dir/ocsp/cert.pem"
 }
 
 function revoke_ca {
-    prepare_ca "$1"
-    prepare_issuer "$issuer"
+    ca_dir="$1" && shift
 
-    prompt "revoking CA '$sub_dir' from CA '$ca_dir'"
-    [ -z "$passin" ] && passin="$passedout"
-    puts "openssl ca $batch_mode -config $issuer_cnf $passin -revoke $sub_dir/certs/cert.pem"
-    eval openssl ca $batch_mode -config "$issuer_cnf" $passin -revoke "$sub_dir/certs/cert.pem" $output_mode
-    cont $?
+    prepare_ca "$ca_dir"
 
-    update_crl "$ca_dir"
+    prompt "revoking CA '$ca_subj' from CA '$issuer_subj'"
+    revoke_ca_cert "$ca_dir"
+
+    if [ ! -z "$crlUrl" ]; then
+        prompt "update revocation list for CA '$ca_subj'"
+        update_crl "$ca_dir"
+    fi
 }
 
 function info_ca {
-    use_ca $1
+    ca_dir="$1" && shift
+
+    use_ca "$ca_dir"
 
     issuer=`openssl x509 -in $ca_dir/certs/cert.pem -noout -issuer`
     subject=`openssl x509 -in $ca_dir/certs/cert.pem -noout -subject`

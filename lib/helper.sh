@@ -183,6 +183,15 @@ function prepare_ca {
     export ca_dir="$ca_dir"
     export ca_cnf="$ca_dir/ca.cnf"
     read_presets "$ca_dir/presets.cnf"
+    export issuer_dir="$issuer"
+    export issuer_cnf="$issuer/ca.cnf"
+    export ca_subj="CN="`grep commonName $ca_dir/presets.cnf | sed -e 's/.*=\s*\(\)/\1/'`
+    export issuer_subj="CN="`grep commonName $issuer/presets.cnf | sed -e 's/.*=\s*\(\)/\1/'`
+}
+
+function restore_ca {
+    prepare_ca "$sub_dir"
+    passin=""
 }
 
 function use_ca {
@@ -195,13 +204,11 @@ function use_ca {
 }
 
 function prepare_issuer {
-    issuer_dir="$1"
     if [ -z "$issuer_dir" ]; then
         echo "ERROR in prepare_issuer(): no issuer_dir" && exit 1
     fi
     export sub_dir="$ca_dir"
-    export ca_dir="$issuer_dir"
-    export issuer_cnf="$issuer_dir/ca.cnf"
+    prepare_ca "$issuer_dir"
 }
 
 function append_sans {
@@ -209,15 +216,15 @@ function append_sans {
     san="${1:-DNS}" && shift
 
     cp "$OPENSSL_CSR_CNF" "$cnf"
-
     template_config "$cnf"
+
     count=0
     [ -z "$altName$count" ] &&  sed -i '/subjectAltName/d' "$cnf"
     while true; do
         dns="altName$count"
         eval "val=\$$dns"
-        #echo "$dns = $val"
         [ -z "$val" ] && break
+        puts "$dns = $val"
         echo "$san.${count} = $val" >> $cnf
         count=$(( count + 1 ))
     done
@@ -228,21 +235,14 @@ function extract_san_from_csr {
     csr="$1" && shift
     san="${1:-DNS}" && shift
 
-    cp "$ca_cnf" "$cnf"
+    cp "$OPENSSL_CA_CNF" "$cnf"
+    template_config "$cnf"
+
     list=`grep -i $san $csr | sed -e "s/$san:/\n/g" | sed 's/,//g'`
     count=0
     for dns in $list; do
-        echo "$san.$count = $dns" >> $tmp_cnf
+        puts "$san.$count = $dns"
+        echo "$san.$count = $dns" >> "$cnf"
         count=$(( count + 1 ))
     done
-    echo "$tmp_cnf"
-}
-
-function convert_certs {
-  dir="$1"
-  prompt "converting certificate to CRT and Text"
-  openssl x509 -outform der -in $dir/cert.pem -out $dir/cert.crt 2>&1
-  puts "$dir/cert.crt"
-  openssl x509 -noout -text -in $dir/cert.pem > $dir/cert.txt
-  puts "$dir/cert.txt"
 }
