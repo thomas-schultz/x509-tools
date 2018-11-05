@@ -13,6 +13,12 @@ function create_client_certificate {
     create_user_certificate "$ca" "$name" "client_cert" $*
 }
 
+function create_signer_certificate {
+    name="$1" && shift
+    ca="$1" && shift
+    create_user_certificate "$ca" "$name" "signer_cert" $*
+}
+
 function create_user_certificate {
     ca_dir="$1" && shift
     name="$1" && shift
