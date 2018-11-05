@@ -42,6 +42,7 @@ source: https://github.com/thomas-schultz/x509-tools
                                 the CA of the <issuer> folder
     server <name> <issuer>      server certificate (according to ca.cnf)
     client <name> <issuer>      client certificate (according to ca.cnf)
+    signer <name> <issuer>      signer certificate (according to ca.cnf)
 
  export:            exports certificates in pkcs12 format
     user <name> <issuer>        only works on existing certificates
@@ -59,6 +60,8 @@ source: https://github.com/thomas-schultz/x509-tools
     client <name>               revokes a client certificate
                                 (name can be folder or serial)
     server <name>               revokes a server certificate
+                                (name can be folder or serial)
+    signer <name>               revokes a signer certificate
                                 (name can be folder or serial)
 
 options:
@@ -123,6 +126,11 @@ while [ "$1" != "" ]; do
         --pkcs12)
             pkcs12=$2 && shift
             pkcs12_passout="-passout pass:$pkcs12"
+            ;;
+        --ecdsa-curve)
+            ecdsa_curve_x509_tools=$2 && shift
+            ecdsa_curve_x509_tools="-name $ecdsa_curve"
+            export ecdsa_curve_x509_tools
             ;;
         -subj)
             subj=$2 && shift
@@ -276,6 +284,12 @@ function create {
             [ -z $1 ] && echo "ERROR: missing issuer path for 'create $type'" && exit 1
             create_client_certificate $name $*
             ;;
+        signer)
+            [ -z $bits ] || export cert_keylength=$bits
+            [ -z $days ] || export cert_days=$days
+            [ -z $1 ] && echo "ERROR: missing issuer path for 'create $type'" && exit 1
+            create_signer_certificate $name $*
+            ;;
         *)
             echo "ERROR: unknown command 'create $type'" && exit 1
     esac
@@ -317,7 +331,7 @@ function export_cert {
     type="$1" && shift
 
     case "$type" in
-        user|client|server)
+        user|client|server|signer)
             [ -z $1 ] && echo "ERROR: missing certificate name for 'export'" && exit 1
             [ -z $2 ] && echo "ERROR: missing issuer path for 'export'" && exit 1
             export_pkcs12 $*
@@ -383,6 +397,10 @@ function revoke {
             revoke_user_certificate $name $*
             ;;
         client)
+            [ -z $1 ] && echo "ERROR: missing issuer path for 'revoke $type'" && exit 1
+            revoke_user_certificate $name $*
+            ;;
+        signer)
             [ -z $1 ] && echo "ERROR: missing issuer path for 'revoke $type'" && exit 1
             revoke_user_certificate $name $*
             ;;

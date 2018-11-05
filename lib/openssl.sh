@@ -5,8 +5,14 @@ function create_private_key {
     keylength="$1" && shift
 
     [ -z "$passout" ] || key_passout="-aes256 $passout"
-    puts "openssl genrsa $key_passout -out $dir/key.pem $keylength"
-    eval openssl genrsa $key_passout -out "$dir/key.pem" $keylength $output_mode
+    if [ -z "$ecdsa_curve_x509_tools" ]
+    then
+        puts "openssl genrsa $key_passout -out $dir/key.pem $keylength"
+        eval openssl genrsa $key_passout -out "$dir/key.pem" $keylength $output_mode
+    else
+        puts "openssl ecparam -genkey $ecdsa_curve_x509_tools | openssl ec $key_passout -out $dir/key.pem"
+        eval openssl ecparam -genkey $ecdsa_curve_x509_tools | openssl ec $key_passout -out $dir/key.pem
+    fi
     cont $?
     puts "$dir/key.pem"
 }
