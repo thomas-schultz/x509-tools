@@ -96,6 +96,7 @@ function prepare_config {
     #src="$1" && shift
 
     template="$ca_dir/ca.cnf"
+    csr="$ca_dir/csr.cnf"
     presets="$ca_dir/presets.cnf"
     puts "creating preset file $presets"
     echo -e "# presets for this CA\n" > $presets
@@ -109,6 +110,7 @@ function prepare_config {
 
     puts "creating config file $template"
     cp "$OPENSSL_CA_CNF" "$template"
+    cp "$OPENSSL_CSR_CNF" "$csr"
     template_config "$template" "$presets"
 }
 
@@ -215,7 +217,7 @@ function append_sans {
     cnf="$1" && shift
     san="${1:-DNS}" && shift
 
-    cp "$OPENSSL_CSR_CNF" "$cnf"
+    cp "$ca_dir/csr.cnf" "$cnf"
     template_config "$cnf"
 
     count=0
