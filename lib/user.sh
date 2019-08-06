@@ -43,7 +43,7 @@ function create_user_certificate {
     prompt "extracting subjectAltNames from CSR for $name"
     extract_san_from_csr "$csr_cnf" "$ca_dir/csr/$name-csr.txt"
 
-    prompt "signing server certificate for '$name' with CA '$ca_sibj'"
+    prompt "signing server certificate for '$name' with CA '$ca_subj'"
     sign_user_csr "$ca_dir" "$csr_cnf" $cert_days $extension
 
     protect_private_key "$ca_dir/user_certs/$name/"
