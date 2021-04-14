@@ -9,6 +9,9 @@ if [ -z "$OPENSSL_CSR_CNF" ]; then
     OPENSSL_CSR_CNF="${base}/config/csr.cnf"
 fi
 
+VERSION='x509-tools 2021-04-14 17:10:09';
+REPO="https://gitlab.genua.de/twild/x509-tools/"
+
 source "${base}/lib/helper.sh"
 source "${base}/lib/openssl.sh"
 source "${base}/lib/ca.sh"
@@ -36,9 +39,9 @@ source: https://github.com/thomas-schultz/x509-tools
 
  create <type>:     creates x509 certificates
     ca <folder>                 Root-CA
-    subca <folder>              Intermediate CA signed by
+    subca <folder> <issuer>     Intermediate CA signed by
                                 the CA of the <issuer> folder
-    endca <folder>              Intermediate End-CA signed by
+    endca <folder> <issuer>     Intermediate End-CA signed by
                                 the CA of the <issuer> folder
     server <name> <issuer>      server certificate (according to ca.cnf)
     client <name> <issuer>      client certificate (according to ca.cnf)
@@ -66,11 +69,13 @@ source: https://github.com/thomas-schultz/x509-tools
 
 options:
     -h/--help               shows this output
+    --version               shows version information
     -v/--verbose            verbose output
     -i/--interactive        interactive user inputs
     -b/--bits <number>      set key length
     -d/--days <number>      set validity period in days
-    -p/--policy <policy>    set the policy for the CA
+    -p/--policy <policy>    set the policy for the CAv
+    --ecdsa-curve <curve>   use specific ecdsa curve
     --ask                   ask for passwords
     --passin <pw>           set passphrase to unlock private key
     --passout <pw>          set passphrase for private key
@@ -102,6 +107,9 @@ while [ "$1" != "" ]; do
     PARAM=`echo $1 | awk -F= '{print $1}'`
     VALUE=`echo $1 | awk -F= '{print $2}'`
     case $PARAM in
+        --version)
+            echo "$VERSION ($REPO)" && exit 0
+            ;;
         -v | --verbose)
             verbose=1
             output_mode="2>&1"
