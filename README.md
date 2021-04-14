@@ -19,12 +19,13 @@ source: https://github.com/thomas-schultz/x509-tools
 
  create <type>:     creates x509 certificates
     ca <folder>                 Root-CA
-    subca <folder>              Intermediate CA signed by
+    subca <folder> <issuer>     Intermediate CA signed by
                                 the CA of the <issuer> folder
-    endca <folder>              Intermediate End-CA signed by
+    endca <folder> <issuer>     Intermediate End-CA signed by
                                 the CA of the <issuer> folder
     server <name> <issuer>      server certificate (according to ca.cnf)
     client <name> <issuer>      client certificate (according to ca.cnf)
+    signer <name> <issuer>      signer certificate (according to ca.cnf)
 
  export:            exports certificates in pkcs12 format
     user <name> <issuer>        only works on existing certificates
@@ -43,6 +44,8 @@ source: https://github.com/thomas-schultz/x509-tools
                                 (name can be folder or serial)
     server <name>               revokes a server certificate
                                 (name can be folder or serial)
+    signer <name>               revokes a signer certificate
+                                (name can be folder or serial)
 
 options:
     -h/--help               shows this output
@@ -50,7 +53,8 @@ options:
     -i/--interactive        interactive user inputs
     -b/--bits <number>      set key length
     -d/--days <number>      set validity period in days
-    -p/--policy <policy>    set the policy for the CA
+    -p/--policy <policy>    set the policy for the CAv
+    --ecdsa-curve <curve>   use specific ecdsa curve
     --ask                   ask for passwords
     --passin <pw>           set passphrase to unlock private key
     --passout <pw>          set passphrase for private key
@@ -68,6 +72,8 @@ options:
         CRL:        crlUrl
         OCSP:       ocspUrl
         URL:        issuerUrl
+
+
 
 ```
 
