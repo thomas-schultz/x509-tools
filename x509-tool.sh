@@ -128,7 +128,7 @@ while [ "$1" != "" ]; do
             pkcs12_passout="-passout pass:$pkcs12"
             ;;
         --ecdsa-curve)
-            ecdsa_curve_x509_tools=$2 && shift
+            ecdsa_curve=$2 && shift
             ecdsa_curve_x509_tools="-name $ecdsa_curve"
             export ecdsa_curve_x509_tools
             ;;
