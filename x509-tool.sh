@@ -137,8 +137,14 @@ while [ "$1" != "" ]; do
             ;;
         --ecdsa-curve)
             ecdsa_curve=$2 && shift
-            ecdsa_curve_x509_tools="-name $ecdsa_curve"
-            export ecdsa_curve_x509_tools
+            if [[ "${ecdsa_curve}" == 'ED25519' ]]; then
+                [ -n "${pw}" ] && passout="-pass pass:${pw}"
+                ecdsa_curve_genpkey="-algorithm ${ecdsa_curve}"
+                export ecdsa_curve_genpkey
+            else
+                ecdsa_curve_x509_tools="-name $ecdsa_curve"
+                export ecdsa_curve_x509_tools
+            fi
             ;;
         -subj)
             subj=$2 && shift
