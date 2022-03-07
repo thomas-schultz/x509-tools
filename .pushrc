@@ -1,0 +1,4 @@
+# .pushrc for genuzoo-qs
+export PUSH_SERVER="qs-testrunner"
+export PUSH_INCLUDES=(".gitlab-ci.yml" "tests/*.sh")
+export PUSH_EXCLUDES=("*~" ".*" "tests/*")
