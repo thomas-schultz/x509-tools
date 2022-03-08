@@ -9,8 +9,9 @@ if [ -z "$OPENSSL_CSR_CNF" ]; then
     OPENSSL_CSR_CNF="${base}/config/csr.cnf"
 fi
 
-VERSION='x509-tools 2021-04-14 17:10:09';
-REPO="https://gitlab.genua.de/twild/x509-tools/"
+VERSION='x509-tools 2022-03-08 18:44:28';
+AUTHOR="Thomas Wild (thomas@t-schultz.de)"
+REPO="https://github.com/thomas-schultz/x509-tools"
 
 source "${base}/lib/helper.sh"
 source "${base}/lib/openssl.sh"
@@ -27,8 +28,8 @@ rand="openssl rand -hex 8"
 
 function show_usage {
     cat << EOF
-usage:  $0 <command> <subcommand> [<args>] [<options>]
-author: Thomas Schultz (thomas@t-schultz.de)
+usage:  ./x509-tool.sh <command> <subcommand> [<args>] [<options>]
+author: Thomas Wild (thomas@t-schultz.de)
 source: https://github.com/thomas-schultz/x509-tools
 
  define <type>:     defines or updates CA settings (presets.cnf)
@@ -88,7 +89,9 @@ options:
         O:          organizationName
         OU:         organizationalUnitName
         CN:         commonName
-        DNS/SAN:    subjaltname
+        DNS:        subjaltname DNS
+        IP:         subjaltname IP
+        UPN:        subjaltname UPN (otherName)
         @/E:        emailAddress
         CRL:        crlUrl
         OCSP:       ocspUrl
@@ -168,8 +171,14 @@ while [ "$1" != "" ]; do
         -CN)
             set_value "commonName" "$VALUE"
             ;;
-        -DNS|-SAN)
-            set_value "subjaltname" "$VALUE"
+        -DNS)
+            set_value "subjaltnameDNS" "$VALUE"
+            ;;
+        -IP)
+            set_value "subjaltnameIP" "$VALUE"
+            ;;
+        -UPN)
+            set_value "subjaltnameUPN" "$VALUE"
             ;;
         -@|-E)
             set_value "emailAddress" "$VALUE"

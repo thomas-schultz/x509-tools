@@ -27,6 +27,8 @@ preserve                = no
 unique_subject          = yes
 policy                  = {{ policy }}
 
+copy_extensions         = copy
+
 
 [ policy_strict ]
 # The CA should only sign intermediate certificates that match.

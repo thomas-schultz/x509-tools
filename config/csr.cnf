@@ -42,4 +42,3 @@ subjectAltName                  = @alt_names
 
 # do not move, file gets appended here
 [alt_names]
-DNS.0 = {{ commonName }}

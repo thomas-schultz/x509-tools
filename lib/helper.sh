@@ -34,8 +34,16 @@ function set_value {
         CN|commonName)
             export commonName="$value"
             ;;
-        SAN|subjaltname)
-            export "altName${subjaltname_count}=$value"
+        DNS|subjaltnameDNS)
+            export "altNameDNS${subjaltname_count}=$value"
+            subjaltname_count=$(( subjaltname_count + 1 ))
+            ;;
+        IP|subjaltnameIP)
+            export "altNameIP${subjaltname_count}=$value"
+            subjaltname_count=$(( subjaltname_count + 1 ))
+            ;;
+        UPN|subjaltnameUPN)
+            export "altNameUPN${subjaltname_count}=$value"
             subjaltname_count=$(( subjaltname_count + 1 ))
             ;;
         E|emailAddress)
@@ -215,19 +223,29 @@ function prepare_issuer {
 
 function append_sans {
     cnf="$1" && shift
-    san="${1:-DNS}" && shift
+    sans=("DNS" "IP" "UPN")
 
     cp "$ca_dir/csr.cnf" "$cnf"
     template_config "$cnf"
 
+    if [ $subjaltname_count -eq 0 ]; then
+        sed -i '/subjectAltName/d' "$cnf"
+        return
+    fi
     count=0
-    [ -z "$altName$count" ] &&  sed -i '/subjectAltName/d' "$cnf"
-    while true; do
-        dns="altName$count"
-        eval "val=\$$dns"
-        [ -z "$val" ] && break
-        puts "$dns = $val"
-        echo "$san.${count} = $val" >> $cnf
+    while [ $count -le $subjaltname_count ]; do
+        for san in "${sans[@]}"; do
+            altname="altName$san$count"
+            eval "val=\$$altname"
+            if [ ! -z "$val" ] ; then
+                puts "$altname = $val"
+                if [ "$san" == "UPN" ]; then
+                    san="otherName"
+                    val="1.3.6.1.4.1.311.20.2.3;UTF8:$val"
+                fi
+                echo "$san.${count} = $val" >> $cnf
+            fi
+        done
         count=$(( count + 1 ))
     done
 }
@@ -235,16 +253,33 @@ function append_sans {
 function extract_san_from_csr {
     cnf="$1" && shift
     csr="$1" && shift
-    san="${1:-DNS}" && shift
 
     cp "$OPENSSL_CA_CNF" "$cnf"
     template_config "$cnf"
 
-    list=`grep -i $san $csr | sed -e "s/$san:/\n/g" | sed 's/,//g'`
+    # skip if copy_extensions is used
+    if grep -q "copy_extensions.*=.*copy" "$cnf"; then
+      altnames=""
+    else
+      altnames="$( grep 'X509v3 Subject Alternative Name' -A1 "$csr" | grep -v X509v3 )"
+    fi
+    if [ -z "$altnames" ]; then
+        sed -i '/subjectAltName/d' "$cnf"
+        return
+    fi
+    return
     count=0
-    for dns in $list; do
-        puts "$san.$count = $dns"
-        echo "$san.$count = $dns" >> "$cnf"
+    while read altname; do
+        san="$( echo $altname | cut -d ':' -f1 )"
+        value="$( echo $altname | cut -d ':' -f2 )"
+        if [ "$san" == "IP Address" ]; then
+          san="IP"
+        fi
+        if [ "$value" == "<unsupported>" ]; then
+          san="# $san"
+        fi
+        puts "$san.$count = $value"
+        echo "$san.$count = $value" >> "$cnf"
         count=$(( count + 1 ))
-    done
+    done < <(echo "$altnames" | sed -n 1'p' | tr ',' '\n' )
 }
