@@ -1,14 +1,11 @@
 # x509-tool - Create CA, Intermediate-CA, Server and Client Certificates
 
-[![pipeline status](https://gitlab.genua.de/twild/x509-tools/badges/master/pipeline.svg)](https://gitlab.genua.de/twild/x509-tools/commits/master)
-
-
 This tool is a wrapper for openssl written for linux bash.
 
 
 ```
 usage:  ./x509-tool.sh <command> <subcommand> [<args>] [<options>]
-author: Thomas Schultz (thomas@t-schultz.de)
+author: Thomas Wild (thomas@t-schultz.de)
 source: https://github.com/thomas-schultz/x509-tools
 
  define <type>:     defines or updates CA settings (presets.cnf)
