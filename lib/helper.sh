@@ -248,10 +248,6 @@ function append_sans {
         done
         count=$(( count + 1 ))
     done
-    echo "------------------"
-    echo "$cnf"
-    tail -n $count "$cnf"
-    echo "------------------"
 }
 
 function extract_san_from_csr {
