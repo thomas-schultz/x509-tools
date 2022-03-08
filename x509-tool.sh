@@ -88,7 +88,9 @@ options:
         O:          organizationName
         OU:         organizationalUnitName
         CN:         commonName
-        DNS/SAN:    subjaltname
+        DNS:        subjaltname DNS
+        IP:         subjaltname IP
+        UPN:        subjaltname UPN (otherName)
         @/E:        emailAddress
         CRL:        crlUrl
         OCSP:       ocspUrl
@@ -168,8 +170,14 @@ while [ "$1" != "" ]; do
         -CN)
             set_value "commonName" "$VALUE"
             ;;
-        -DNS|-SAN)
-            set_value "subjaltname" "$VALUE"
+        -DNS)
+            set_value "subjaltnameDNS" "$VALUE"
+            ;;
+        -IP)
+            set_value "subjaltnameIP" "$VALUE"
+            ;;
+        -UPN)
+            set_value "subjaltnameUPN" "$VALUE"
             ;;
         -@|-E)
             set_value "emailAddress" "$VALUE"
