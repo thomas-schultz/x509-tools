@@ -171,5 +171,6 @@ test_list_ca
 test_list_subca
 
 cat $OUT
+openssl version
 
 [ $GOOD -eq $COUNT ] && exit 0
