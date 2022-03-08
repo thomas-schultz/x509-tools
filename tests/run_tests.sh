@@ -89,32 +89,42 @@ function test_revoke_endca {
 
 function test_create_server {
     echo -e "\ntesting ${FUNCNAME[0]}\n"
-    ./x509-tool.sh $verbose create server webserver1 sub-ca -d 120 --passin Password2 -CN="foo1" -E="foobar@domain.tld"; it $? ${FUNCNAME[0]}
+    ./x509-tool.sh $verbose create server webserver1 sub-ca -d 120 --passin Password2 -CN="webserver1" -E="webserver1@dotorg.tld"; it $? ${FUNCNAME[0]}
 }
 
 function test_create_server_with_san {
     echo -e "\ntesting ${FUNCNAME[0]}\n"
-    ./x509-tool.sh $verbose create server webserver2 sub-ca --passin Password2 -CN="foo2" -DNS="foobar" -E="foobar@domain.tld"; it $? ${FUNCNAME[0]}
+    ./x509-tool.sh $verbose create server webserver2 sub-ca --passin Password2 -CN="webserver2" -DNS="webserver2.foo" -E="webserver2@dotorg.tld"; it $? ${FUNCNAME[0]}
 }
 
 function test_create_server_with_two_sans {
     echo -e "\ntesting ${FUNCNAME[0]}\n"
-    ./x509-tool.sh $verbose create server webserver3 end-ca --passin Password3 -CN="foo3" -DNS="foobar" -DNS="foo.bar" -E="foobar@domain.tld"; it $? ${FUNCNAME[0]}
+    ./x509-tool.sh $verbose create server webserver3 end-ca --passin Password3 -CN="webserver3" -DNS="webserver3.foo" -DNS="webserver3.bar" -E="webserver3@dotorg.tld"; it $? ${FUNCNAME[0]}
 }
 
 function test_create_client {
     echo -e "\ntesting ${FUNCNAME[0]}\n"
-    ./x509-tool.sh $verbose create client client1 sub-ca --pkcs12 "passphrase" -d 120 --passin Password2 -CN="c1" -E="foobar@domain.tld"; it $? ${FUNCNAME[0]}
+    ./x509-tool.sh $verbose create client client1 sub-ca --pkcs12 "passphrase" -d 120 --passin Password2 -CN="client1" -E="client1@dotorg.tld"; it $? ${FUNCNAME[0]}
 }
 
 function test_create_client_with_san {
     echo -e "\ntesting ${FUNCNAME[0]}\n"
-    ./x509-tool.sh $verbose create client client2 end-ca --passin Password3 -CN="c2" -DNS="foobar" -E="foobar@domain.tld"; it $? ${FUNCNAME[0]}
+    ./x509-tool.sh $verbose create client client2 end-ca --passin Password3 -CN="client2" -DNS="client2.foo" -E="client2@dotorg.tld"; it $? ${FUNCNAME[0]}
 }
 
 function test_create_client_with_two_sans {
     echo -e "\ntesting ${FUNCNAME[0]}\n"
-    ./x509-tool.sh $verbose create client client3 end-ca --passin Password3 -CN="c3" -DNS="foobar" -DNS="foo.bar" -E="foobar@domain.tld"; it $? ${FUNCNAME[0]}
+    ./x509-tool.sh $verbose create client client3 end-ca --passin Password3 -CN="client3" -DNS="client3.foo" -DNS="client3.bar" -E="client3@dotorg.tld"; it $? ${FUNCNAME[0]}
+}
+
+function test_create_client_with_dns_and_ip {
+    echo -e "\ntesting ${FUNCNAME[0]}\n"
+    ./x509-tool.sh $verbose create client client4 end-ca --passin Password3 -CN="client4" -DNS="client4.foo" -IP="1.2.3.4" -E="client4@dotorg.tld"; it $? ${FUNCNAME[0]}
+}
+
+function test_create_client_with_san_and_upn {
+    echo -e "\ntesting ${FUNCNAME[0]}\n"
+    ./x509-tool.sh $verbose create client client5 end-ca --passin Password3 -CN="client5" -DNS="client5.foo" -UPN="client5" -E="client5@dotorg.tld"; it $? ${FUNCNAME[0]}
 }
 
 function test_revoke_client {
@@ -153,6 +163,8 @@ test_create_server_with_two_sans
 test_create_client
 test_create_client_with_san
 test_create_client_with_two_sans
+test_create_client_with_dns_and_ip
+test_create_client_with_san_and_upn
 test_revoke_client
 test_update_ca_crl
 test_list_ca
