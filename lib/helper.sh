@@ -232,7 +232,7 @@ function append_sans {
         sed -i '/subjectAltName/d' "$cnf"
         return
     fi
-    count=1
+    count=0
     while [ $count -le $subjaltname_count ]; do
         for san in "${sans[@]}"; do
             altname="altName$san$count"
@@ -248,30 +248,40 @@ function append_sans {
         done
         count=$(( count + 1 ))
     done
-    tail -n 5 $cnf
+    echo "------------------"
+    echo "$cnf"
+    tail -n $count "$cnf"
+    echo "------------------"
 }
 
 function extract_san_from_csr {
     cnf="$1" && shift
     csr="$1" && shift
-    sans=("DNS" "IP" "othername")
-    sans=("DNS")
 
     cp "$OPENSSL_CA_CNF" "$cnf"
     template_config "$cnf"
 
-    altnames="$( grep 'X509v3 Subject Alternative Name' -A1 "$cnf" )"
+    # skip if copy_extensions is used
+    grep -q "copy_extensions.*=.*copy" && return
+
+    altnames="$( grep 'X509v3 Subject Alternative Name' -A1 "$csr" | grep -v X509v3 )"
     if [ -z "$altnames" ]; then
         sed -i '/subjectAltName/d' "$cnf"
         return
     fi
-    for san in "${sans[@]}"; do
-        list=`echo "$altnames" | grep -i $san | sed -e "s/$san:/\n/g" | sed 's/,//g'`
-        count=0
-        for altname in $list; do
-            puts "$san.$count = $altname"
-            echo "$san.$count = $altname" >> "$cnf"
-            count=$(( count + 1 ))
-        done
-    done
+    return
+    count=0
+    while read altname; do
+        san="$( echo $altname | cut -d ':' -f1 )"
+        value="$( echo $altname | cut -d ':' -f2 )"
+        if [ "$san" == "IP Address" ]; then
+          san="IP"
+        fi
+        if [ "$value" == "<unsupported>" ]; then
+          san="# $san"
+        fi
+        puts "$san.$count = $value"
+        echo "$san.$count = $value" >> "$cnf"
+        count=$(( count + 1 ))
+    done < <(echo "$altnames" | sed -n 1'p' | tr ',' '\n' )
 }
