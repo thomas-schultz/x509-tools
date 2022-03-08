@@ -258,9 +258,11 @@ function extract_san_from_csr {
     template_config "$cnf"
 
     # skip if copy_extensions is used
-    grep -q "copy_extensions.*=.*copy" && return
-
-    altnames="$( grep 'X509v3 Subject Alternative Name' -A1 "$csr" | grep -v X509v3 )"
+    if grep -q "copy_extensions.*=.*copy" "$cnf"; then
+      altnames=""
+    else
+      altnames="$( grep 'X509v3 Subject Alternative Name' -A1 "$csr" | grep -v X509v3 )"
+    fi
     if [ -z "$altnames" ]; then
         sed -i '/subjectAltName/d' "$cnf"
         return
