@@ -69,8 +69,4 @@ options:
         CRL:        crlUrl
         OCSP:       ocspUrl
         URL:        issuerUrl
-
-
-
 ```
-
