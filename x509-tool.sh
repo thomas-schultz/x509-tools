@@ -10,7 +10,8 @@ if [ -z "$OPENSSL_CSR_CNF" ]; then
 fi
 
 VERSION='x509-tools 2021-04-14 17:10:09';
-REPO="https://gitlab.genua.de/twild/x509-tools/"
+AUTHOR="Thomas Wild (thomas@t-schultz.de)"
+REPO="https://github.com/thomas-schultz/x509-tools"
 
 source "${base}/lib/helper.sh"
 source "${base}/lib/openssl.sh"
@@ -28,8 +29,8 @@ rand="openssl rand -hex 8"
 function show_usage {
     cat << EOF
 usage:  $0 <command> <subcommand> [<args>] [<options>]
-author: Thomas Schultz (thomas@t-schultz.de)
-source: https://github.com/thomas-schultz/x509-tools
+author: ${AUTHOR}
+source: ${REPO}
 
  define <type>:     defines or updates CA settings (presets.cnf)
     ca <folder>                 for Root-CAs
