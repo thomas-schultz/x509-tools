@@ -19,7 +19,9 @@ function define_ca {
 
 function create_ca {
     ca_dir="$1" && shift
+
     prepare_ca "$ca_dir"
+    use_ca "$ca_dir"
     extension="v3_ca"
 
     prompt "creating CA private key for '$ca_subj'"
@@ -60,6 +62,7 @@ function create_intermediate_ca {
     extension="$1" && shift
 
     prepare_ca "$ca_dir"
+    use_ca "$ca_dir"
 
     prompt "creating intermediate private key for '$ca_subj'"
     create_private_key "$ca_dir/private" $ca_keylength
@@ -105,7 +108,8 @@ function create_intermediate_ca {
 function create_ocsp {
     ca_dir="$1" && shift
 
-    prepare_ca "$ca_dir" && shift
+    prepare_ca "$ca_dir"
+    use_ca "$ca_dir"
 
     prompt "creating OCSP private key for '$ca_subj'"
     create_private_key "$ca_dir/ocsp" $cert_bits
@@ -126,6 +130,7 @@ function revoke_ca {
     ca_dir="$1" && shift
 
     prepare_ca "$ca_dir"
+    use_ca "$ca_dir"
 
     prompt "revoking CA '$ca_subj' from CA '$issuer_subj'"
     revoke_ca_cert "$ca_dir"

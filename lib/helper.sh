@@ -205,12 +205,20 @@ function restore_ca {
 }
 
 function use_ca {
-    ca_dir="$1"
+    ca_dir="$1" && shift
     if [ -z "$ca_dir" ]; then
         echo "ERROR in use_ca(): no ca_dir" && exit 1
     fi
     export ca_dir="$ca_dir"
     export ca_cnf="$ca_dir/ca.cnf"
+
+    keys=("certs" "crl_dir" "new_certs_dir" "database" "serial" "private_key" "certificate" "crl")
+    for key in "${keys[@]}"; do
+        line="$( grep '^crl[[:space:]]\+=' $ca_cnf )"
+        value="$( echo $line | cut -d '=' -f2 | xargs )"
+        value="$( dir=$ca_dir eval "echo $value" )"
+        export ca_$key=$value
+    done
 }
 
 function prepare_issuer {

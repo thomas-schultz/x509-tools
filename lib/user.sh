@@ -25,6 +25,7 @@ function create_user_certificate {
     extension="$1" && shift
 
     prepare_ca "$ca_dir"
+    use_ca "$ca_dir"
 
     mkdir -p "$ca_dir/user_certs/$name/"
 
