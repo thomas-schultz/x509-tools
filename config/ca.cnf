@@ -7,14 +7,14 @@ default_ca              = ca_default
 [ ca_default ]
 # Directory and file locations.
 dir                     = $ENV::ca_dir
-certs                   = $dir/certs
+certs                   = $dir/ca
 crl_dir                 = $dir/crl
-new_certs_dir           = $dir/newcerts
+new_certs_dir           = $dir/certs
 database                = $dir/index.txt
 serial                  = $dir/serial
 RANDFILE                = $dir/private/.rand
 private_key             = $dir/private/key.pem
-certificate             = $dir/certs/cert.pem
+certificate             = $dir/ca/cert.pem
 crl                     = $dir/crl/crl.pem
 crl_extensions          = v3_crl
 default_crl_days        = {{ crl_days }}
