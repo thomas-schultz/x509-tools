@@ -20,43 +20,42 @@ function create_signer_certificate {
 }
 
 function create_user_certificate {
-    ca_dir="$1" && shift
+    ca="$1" && shift
     name="$1" && shift
     extension="$1" && shift
 
-    prepare_ca "$ca_dir"
-    use_ca "$ca_dir"
+    load_ca "$ca"
 
-    mkdir -p "$ca_dir/user_certs/$name/"
+    mkdir -p "$ca_new_certs_dir/$name/"
 
     prompt "creating private key for $name'"
-    create_private_key "$ca_dir/user_certs/$name" $keylength
+    create_private_key "$ca_new_certs_dir/$name/key.pem" $keylength
 
-    csr_cnf="$ca_dir/user_certs/$name/cert.cnf"
+    csr_cnf="$ca_new_certs_dir/$name/cert.cnf"
     puts "append subjectAltNames to csr request"
     append_sans "$csr_cnf"
 
     prompt "creating certificate request for '$name' towards '$ca_subj'"
-    create_user_csr "$ca_dir" "$csr_cnf" "$name"
+    create_user_csr "$csr_cnf" "$name"
 
-    convert_csr "$ca_dir/csr/$name-csr.pem"
+    convert_csr "$ca_csr_dir/$name-csr.pem"
 
     prompt "extracting subjectAltNames from CSR for $name"
-    extract_san_from_csr "$csr_cnf" "$ca_dir/csr/$name-csr.txt"
+    extract_san_from_csr "$csr_cnf" "$ca_csr_dir/$name-csr.txt"
 
     prompt "signing server certificate for '$name' with CA '$ca_subj'"
     sign_user_csr "$ca_dir" "$csr_cnf" $cert_days $extension
 
-    protect_private_key "$ca_dir/user_certs/$name/"
+    protect_private_key "$ca_new_certs_dir/$name/key.pem"
 
-    if [ -e "$ca_dir/certs/chain.pem" ]; then
-        cp "$ca_dir/certs/chain.pem" "$ca_dir/user_certs/$name/chain.pem"
+    if [ -e "$ca_cert_dir/chain.pem" ]; then
+        cp "$ca_cert_dir/chain.pem" "$ca_new_certs_dir/$name/chain.pem"
     else
-        cp "$ca_dir/certs/cert.pem" "$ca_dir/user_certs/$name/chain.pem"
+        cp "$ca_certificate" "$ca_new_certs_dir/$name/chain.pem"
     fi
-    cp "$ca_dir/certs/ca."*.pem "$ca_dir/user_certs/$name/"
+    cp "$ca_cert_dir/ca."*.pem "$ca_new_certs_dir/$name/"
 
-    convert_cert "$ca_dir/user_certs/$name/cert.pem"
+    convert_cert "$ca_new_certs_dir/$name/cert.pem"
 
     if [ ! -z "$pkcs12" ]; then
         export_pkcs12 "$name" "$ca_dir"
@@ -65,15 +64,15 @@ function create_user_certificate {
 
 
 function revoke_user_certificate {
-    ca_dir="$1" && shift
+    ca="$1" && shift
     name="$1" && shift
 
-    use_ca "$ca_dir"
+    load_ca "$ca"
 
-    if [ -e "$ca_dir/user_certs/$name/cert.pem" ]; then
-        cert="$ca_dir/user_certs/$name/cert.pem"
-    elif [ -e "$ca_dir/newcerts/$name.pem" ]; then
-        cert="$ca_dir/newcerts/$name.pem"
+    if [ -e "$ca_new_certs_dir/$name/cert.pem" ]; then
+        cert="$ca_new_certs_dir/$name/cert.pem"
+    elif [ -e "$ca_new_certs_dir/$name.pem" ]; then
+        cert="$ca_new_certs_dir/$name.pem"
     elif [ -e "name" ]; then
         cert="name"
     else
@@ -93,11 +92,11 @@ function export_pkcs12 {
     use_ca "$1" && shift
 
     prompt "exporting to pkcs12 format"
-    puts "openssl pkcs12 -export $pkcs12_passout -inkey $ca_dir/user_certs/$name/key.pem -in $ca_dir/user_certs/$name/cert.pem -certfile $ca_dir/user_certs/$name/chain.pem -out $ca_dir/user_certs/$name.p12"
-    eval openssl pkcs12 -export $pkcs12_passout -inkey "$ca_dir/user_certs/$name/key.pem" -in "$ca_dir/user_certs/$name/cert.pem" -certfile "$ca_dir/user_certs/$name/chain.pem" -out "$ca_dir/user_certs/$name.p12" $output_mode
+    puts "openssl pkcs12 -export $pkcs12_passout -inkey $ca_new_certs_dir/$name/key.pem -in $ca_new_certs_dir/$name/cert.pem -certfile $ca_new_certs_dir/$name/chain.pem -out $ca_new_certs_dir/$name.p12"
+    eval openssl pkcs12 -export $pkcs12_passout -inkey "$ca_new_certs_dir/$name/key.pem" -in "$ca_new_certs_dir/$name/cert.pem" -certfile "$ca_new_certs_dir/$name/chain.pem" -out "$ca_new_certs_dir/$name.p12" $output_mode
     cont $?
 
-    echo "$pkcs12_passout" | sed 's/-passout pass://g' > "$ca_dir/user_certs/$name/export.pw"
+    echo "$pkcs12_passout" | sed 's/-passout pass://g' > "$ca_new_certs_dir/$name/export.pw"
     cont $?
-    puts "$ca_dir/user_certs/$name.p12"
+    puts "$ca_new_certs_dir/$name.p12"
 }

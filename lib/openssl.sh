@@ -1,99 +1,89 @@
 #!/bin/bash
 
 function create_private_key {
-    dir="$1" && shift
+    key="$1" && shift
     keylength="$1" && shift
 
     [ -n "$passout" ] && key_passout="-aes256 $passout"
     if [ -n "$ecdsa_curve_x509_tools" ]; then
-        puts "openssl ecparam -genkey $ecdsa_curve_x509_tools | openssl ec $key_passout -out $dir/key.pem"
-        eval openssl ecparam -genkey $ecdsa_curve_x509_tools | openssl ec $key_passout -out $dir/key.pem
+        puts "openssl ecparam -genkey $ecdsa_curve_x509_tools | openssl ec $key_passout -out $key"
+        eval openssl ecparam -genkey $ecdsa_curve_x509_tools | openssl ec $key_passout -out $key
     elif [ -n "${ecdsa_curve_genpkey}" ]; then
-        puts "openssl genpkey ${ecdsa_curve_genpkey} ${key_passout} -out ${dir}/key.pem"
-        eval openssl genpkey ${ecdsa_curve_genpkey} ${key_passout} -out ${dir}/key.pem
+        puts "openssl genpkey ${ecdsa_curve_genpkey} ${key_passout} -out ${key}"
+        eval openssl genpkey ${ecdsa_curve_genpkey} ${key_passout} -out ${key}
     else
-        puts "openssl genrsa $key_passout -out $dir/key.pem $keylength"
-        eval openssl genrsa $key_passout -out "$dir/key.pem" $keylength $output_mode
+        puts "openssl genrsa $key_passout -out $key $keylength"
+        eval openssl genrsa $key_passout -out "$key" $keylength $output_mode
     fi
     cont $?
-    puts "$dir/key.pem"
+    puts "$key"
 }
 
 function protect_private_key {
-    dir="$1" && shift
+    key="$1" && shift
 
-    chmod 400 "$dir/key.pem"
+    chmod 400 "$key"
 }
 
 function create_self_signed_ca {
-    ca_dir="$1" && shift
-    ca_cnf="$1" && shift
     days="$1" && shift
     extension="$1" && shift
 
-    puts "openssl req $batch_mode -config $ca_cnf -extensions $extension -key $ca_dir/private/key.pem $passedout -new -x509 -days $days -out $ca_dir/certs/cert.pem"
-    eval openssl req $batch_mode -config "$ca_cnf" -extensions $extension -key "$ca_dir/private/key.pem" $passedout -new -x509 -days $days -out "$ca_dir/certs/cert.pem" $output_mode
+    puts "openssl req $batch_mode -config $ca_cnf -extensions $extension -key $ca_private_key $passedout -new -x509 -days $days -out $ca_certificate"
+    eval openssl req $batch_mode -config "$ca_cnf" -extensions $extension -key "$ca_private_key" $passedout -new -x509 -days $days -out "$ca_certificate" $output_mode
     cont $?
-    puts "$ca_dir/certs/cert.pem"
+    puts "$ca_certificate"
 }
 
 function create_ca_csr {
-    ca_dir="$1" && shift
-    ca_cnf="$1" && shift
     extension="$1" && shift
 
-    puts "openssl req $batch_mode -config $ca_cnf -extensions $extension -key $ca_dir/private/key.pem $passedout -new -out $ca_dir/csr/csr.pem"
-    eval openssl req $batch_mode -config "$ca_cnf" -extensions $extension -key "$ca_dir/private/key.pem" $passedout -new -out "$ca_dir/csr/csr.pem" $output_mode
+    puts "openssl req $batch_mode -config $ca_cnf -extensions $extension -key $ca_private_key $passedout -new -out $ca_csr_dir/csr.pem"
+    eval openssl req $batch_mode -config "$ca_cnf" -extensions $extension -key "$ca_private_key" $passedout -new -out "$ca_csr_dir/csr.pem" $output_mode
     cont $?
-    puts "$ca_dir/csr/csr.pem"
-    convert_csr "$ca_dir/csr/csr.pem"
+    puts "$ca_csr_dir/csr.pem"
+    convert_csr "$ca_csr_dir/csr.pem"
 }
 
 function sign_ca_csr {
-    ca_dir="$1" && shift
     extension="$1" && shift
 
-    prepare_issuer "$issuer_dir"
+    use_ca "$issuer_dir"
 
-    puts "openssl ca $batch_mode -config $issuer_cnf -extensions $extension $passin -days $ca_days -notext -in $sub_dir/csr/csr.pem -out $sub_dir/certs/cert.pem"
-    eval openssl ca $batch_mode -config "$issuer_cnf" -extensions $extension $passin -days $ca_days -notext -in "$sub_dir/csr/csr.pem" -out "$sub_dir/certs/cert.pem" $output_mode
+    puts "openssl ca $batch_mode -config $issuer_cnf -extensions $extension $passin -days $ca_days -notext -in $ca_csr_dir/csr.pem -out $ca_certificate"
+    eval openssl ca $batch_mode -config "$issuer_cnf" -extensions $extension $passin -days $ca_days -notext -in "$ca_csr_dir/csr.pem" -out "$ca_certificate" $output_mode
     cont $?
-    puts "$sub_dir/certs/cert.pem"
+    puts "$ca_certificate"
 }
 
 function create_ocsp_csr {
-    ca_dir="$1" && shift
-    ca_cnf="$1" && shift
-
     ocsp_cnf="$ca_cnf.ocsp"
     sed -E 's/(commonName_default\s+)= (.*)/\1=OCSP_for_\2/g' "$ca_cnf" > "$ocsp_cnf"
 
-    puts "openssl req $batch_mode -config $ocsp_cnf -new -key $ca_dir/ocsp/key.pem $passedout -out $ca_dir/csr/ocsp.pem"
-    eval openssl req $batch_mode -config "$ocsp_cnf" -new -key "$ca_dir/ocsp/key.pem" $passedout -out "$ca_dir/csr/ocsp.pem" $output_mode
+    puts "openssl req $batch_mode -config $ocsp_cnf -new -key $ca_ocsp_dir/key.pem $passedout -out $ca_ocsp_dir/csr.pem"
+    eval openssl req $batch_mode -config "$ocsp_cnf" -new -key "$ca_ocsp_dir/key.pem" $passedout -out "$ca_ocsp_dir/csr.pem" $output_mode
     cont $?
-    puts "$ca_dir/csr/csr.pem"
+    puts "$ca_ocsp_dir/csr.pem"
 }
 
 function sign_ocsp_csr {
-    issuer_dir="$1" && shift
     days="$1" && shift
 
     extension="v3_ocsp"
     ocsp_cnf="$ca_cnf.ocsp"
 
-    puts "openssl ca $batch_mode -config $ocsp_cnf -extensions $extension $passedout -days $days -notext -in $ca_dir/csr/ocsp.pem -out $ca_dir/ocsp/cert.pem"
-    eval openssl ca $batch_mode -config "$ocsp_cnf" -extensions $extension $passedout -days $days -notext -in "$ca_dir/csr/ocsp.pem" -out "$ca_dir/ocsp/cert.pem" $output_mode
+    puts "openssl ca $batch_mode -config $ocsp_cnf -extensions $extension $passedout -days $days -notext -in $ca_ocsp_dir/csr.pem -out $ca_ocsp_dir/cert.pem"
+    eval openssl ca $batch_mode -config "$ocsp_cnf" -extensions $extension $passedout -days $days -notext -in "$ca_ocsp_dir/csr.pem" -out "$ca_ocsp_dir/cert.pem" $output_mode
     cont $?
-    puts "$ca_dir/ocsp/cert.pem"
+    puts "$ca_ocsp_dir/cert.pem"
 }
 
 function create_user_csr {
-    ca_dir="$1" && shift
-    ca_cnf="$1" && shift
+    user_cnf="$1" && shift
     name="$1" && shift
 
-    puts "openssl req $batch_mode -config $ca_cnf -key $ca_dir/user_certs/$name/key.pem $passin -new -out $ca_dir/csr/$name-csr.pem"
-    eval openssl req $batch_mode -config "$ca_cnf" -key "$ca_dir/user_certs/$name/key.pem" $passin -new -out "$ca_dir/csr/$name-csr.pem" $output_mode
+    puts "openssl req $batch_mode -config $user_cnf -key $ca_new_certs_dir/$name/key.pem $passin -new -out $ca_dir/csr/$name-csr.pem"
+    eval openssl req $batch_mode -config "$user_cnf" -key "$ca_new_certs_dir/$name/key.pem" $passin -new -out "$ca_dir/csr/$name-csr.pem" $output_mode
     cont $?
     puts "$ca_dir/csr/$name-csr.pem"
 }
@@ -104,10 +94,10 @@ function sign_user_csr {
     days="$1" && shift
     extension="$1" && shift
 
-    puts "openssl ca $batch_mode -config $user_cnf -extensions $extension $passin -days $days -notext -in $ca_dir/csr/$name-csr.pem -out $ca_dir/user_certs/$name/cert.pem"
-    eval openssl ca $batch_mode -config "$user_cnf" -extensions $extension $passin -days $days -notext -in "$ca_dir/csr/$name-csr.pem" -out "$ca_dir/user_certs/$name/cert.pem" $output_mode
+    puts "openssl ca $batch_mode -config $user_cnf -extensions $extension $passin -days $days -notext -in $ca_dir/csr/$name-csr.pem -out $ca_new_certs_dir/$name/cert.pem"
+    eval openssl ca $batch_mode -config "$user_cnf" -extensions $extension $passin -days $days -notext -in "$ca_dir/csr/$name-csr.pem" -out "$ca_new_certs_dir/$name/cert.pem" $output_mode
     cont $?
-    puts "$ca_dir/user_certs/$name/cert.pem"
+    puts "$ca_new_certs_dir/$name/cert.pem"
 }
 
 function convert_cert {
@@ -161,11 +151,9 @@ function unfold_chain {
 }
 
 function update_crl {
-    ca_dir="$1" && shift
-    ca_cnf="$1" && shift
+    ca="$1" && shift
 
-    prepare_ca "$ca_dir"
-
+    load_ca "$ca"
     [ -z "$passin" ] && passin="$passedout"
     puts "openssl ca $batch_mode -config $ca_cnf $passin -gencrl -out $ca_dir/crl/crl.pem"
     eval openssl ca $batch_mode -config "$ca_cnf" $passin -gencrl -out "$ca_dir/crl/crl.pem" $output_mode
@@ -176,13 +164,11 @@ function update_crl {
 }
 
 function revoke_ca_cert {
-    ca_dir="$1" && shift
-
-    prepare_issuer "$issuer_dir"
+    use_ca "$issuer_dir"
 
     [ -z "$passin" ] && passin="$passedout"
-    puts "openssl ca $batch_mode -config $ca_cnf $passin -revoke $sub_dir/certs/cert.pem"
-    eval openssl ca $batch_mode -config "$ca_cnf" $passin -revoke "$sub_dir/certs/cert.pem" $output_mode
+    puts "openssl ca $batch_mode -config $ca_cnf $passin -revoke $ca_certificate"
+    eval openssl ca $batch_mode -config "$ca_cnf" $passin -revoke "$ca_certificate" $output_mode
     cont $?
 }
 

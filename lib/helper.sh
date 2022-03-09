@@ -101,7 +101,6 @@ function set_defaults {
 function prepare_config {
     ca_dir="$1" && shift
     issuer="$1" && shift
-    #src="$1" && shift
 
     template="$ca_dir/ca.cnf"
     csr="$ca_dir/csr.cnf"
@@ -185,48 +184,63 @@ function cont {
     fi
 }
 
-function prepare_ca {
-    ca_dir="$1"
-    if [ -z "$ca_dir" ]; then
-        echo "ERROR in prepare_ca(): no ca_dir" && exit 1
+function load_ca {
+    ca="$1"
+    if [ -z "$ca" ]; then
+        echo "ERROR in load_ca(): no ca" && exit 1
     fi
-    export ca_dir="$ca_dir"
+    export ca_dir="$ca"
     export ca_cnf="$ca_dir/ca.cnf"
     read_presets "$ca_dir/presets.cnf"
     export issuer_dir="$issuer"
     export issuer_cnf="$issuer/ca.cnf"
     export ca_subj="CN="`grep commonName $ca_dir/presets.cnf | sed -e 's/.*=\s*\(\)/\1/'`
     export issuer_subj="CN="`grep commonName $issuer/presets.cnf | sed -e 's/.*=\s*\(\)/\1/'`
+
+    keys=("certs" "crl_dir" "new_certs_dir" "database" "serial" "private_key" "certificate" "crl")
+    for key in "${keys[@]}"; do
+        line="$( grep "^$key[[:space:]]\+=" $ca_cnf )"
+        value="$( echo $line | cut -d '=' -f2 | xargs )"
+        value="$( dir=$ca_dir eval "echo $value" )"
+        export ca_$key=$value
+        if [ -z "$issuer" ]; then
+            unset issuer_$key
+        else
+            line="$( grep "^$key[[:space:]]\+=" $issuer_cnf )"
+            value="$( echo $line | cut -d '=' -f2 | xargs )"
+            value="$( dir=$issuer_dir eval "echo $value" )"
+            export issuer_$key=$value
+        fi
+    done
+    export ca_cert_dir="$( dirname "$ca_certificate" )"
+    export ca_private_key_dir="$( dirname "$ca_private_key" )"
+    export ca_crlnumber="$ca_dir/crlnumber"
+    export ca_csr_dir="$ca_dir/csr"
+    export ca_ocsp_dir="$ca_dir/ocsp"
+    export ca_ocsp_private_key="$ca_ocsp_dir/key.pem"
+    export ca_ocsp_certificate="$ca_ocsp_dir/cert.pem"
+    if [ -z "$issuer" ]; then
+        unset issuer_cert_dir
+        unset issuer_private_key_dir
+    else
+        export issuer_cert_dir="$( dirname "$issuer_certificate" )"
+        export issuer_private_key_dir="$( dirname "$ca_private_key" )"
+    fi
 }
 
 function restore_ca {
-    prepare_ca "$sub_dir"
+    load_ca "$ca_old"
     passin=""
 }
 
 function use_ca {
-    ca_dir="$1" && shift
-    if [ -z "$ca_dir" ]; then
+    ca="$1" && shift
+    if [ -z "$ca" ]; then
         echo "ERROR in use_ca(): no ca_dir" && exit 1
     fi
-    export ca_dir="$ca_dir"
+    export ca_old="$ca_dir"
+    export ca_dir="$ca"
     export ca_cnf="$ca_dir/ca.cnf"
-
-    keys=("certs" "crl_dir" "new_certs_dir" "database" "serial" "private_key" "certificate" "crl")
-    for key in "${keys[@]}"; do
-        line="$( grep '^crl[[:space:]]\+=' $ca_cnf )"
-        value="$( echo $line | cut -d '=' -f2 | xargs )"
-        value="$( dir=$ca_dir eval "echo $value" )"
-        export ca_$key=$value
-    done
-}
-
-function prepare_issuer {
-    if [ -z "$issuer_dir" ]; then
-        echo "ERROR in prepare_issuer(): no issuer_dir" && exit 1
-    fi
-    export sub_dir="$ca_dir"
-    prepare_ca "$issuer_dir"
 }
 
 function append_sans {

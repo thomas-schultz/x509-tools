@@ -4,38 +4,42 @@ function define_ca {
     ca_dir="$1" && shift
     issuer="$1" && shift
 
-    [ -f "$ca_dir/presets.cnf" ] && read_presets "$ca_dir/presets.cnf"
 
-    puts "creating directory $ca_dir"
-    mkdir -p "$ca_dir/"
-    mkdir -p "$ca_dir/certs" "$ca_dir/crl" "$ca_dir/ocsp" "$ca_dir/newcerts" "$ca_dir/csr" "$ca_dir/private"
-    chmod 700 "$ca_dir/private"
-    touch "$ca_dir/index.txt"
-    touch "$ca_dir/index.txt.attr"
-    $rand > "$ca_dir/serial"
-    $rand > "$ca_dir/crlnumber"
+    if [ -f "$ca_dir/presets.cnf" ]; then
+      read_presets "$ca_dir/presets.cnf"
+    else
+      puts "creating directory $ca_dir"
+      mkdir -p "$ca_dir/"
+    fi
+
     prepare_config "$ca_dir" "$issuer"
+    load_ca "$ca_dir"
+
+    mkdir -p "$ca_certs" "$ca_crl_dir" "$ca_new_certs_dir" "$ca_ocsp_dir" "$ca_csr_dir" "$ca_private_key_dir"
+    chmod 700 "$ca_private_key_dir"
+    touch "$ca_database" "$ca_database.attr"
+    $rand > "$ca_serial"
+    $rand > "$ca_crlnumber"
 }
 
 function create_ca {
     ca_dir="$1" && shift
 
-    prepare_ca "$ca_dir"
-    use_ca "$ca_dir"
+    load_ca "$ca_dir"
     extension="v3_ca"
 
     prompt "creating CA private key for '$ca_subj'"
-    create_private_key "$ca_dir/private" $ca_keylength
+    create_private_key "$ca_private_key" $ca_keylength
 
     prompt "creating CA certificate for '$ca_subj'"
-    create_self_signed_ca "$ca_dir" "$ca_cnf" $ca_days $extension
+    create_self_signed_ca $ca_days $extension
 
-    protect_private_key "$ca_dir/private"
+    protect_private_key "$ca_private_key"
 
     prompt "converting CA certificate into DER and Text format"
-    convert_cert "$ca_dir/certs/cert.pem"
+    convert_cert "$ca_certificate"
 
-    unfold_chain "$ca_dir/certs/cert.pem"
+    unfold_chain "$ca_certificate"
 
     if [ ! -z "$crlUrl" ]; then
         prompt "creating revocation list for CA '$ca_subj'"
@@ -58,22 +62,21 @@ function create_end_ca {
 }
 
 function create_intermediate_ca {
-    ca_dir="$1" && shift
+    ca="$1" && shift
     extension="$1" && shift
 
-    prepare_ca "$ca_dir"
-    use_ca "$ca_dir"
+    load_ca "$ca"
 
     prompt "creating intermediate private key for '$ca_subj'"
-    create_private_key "$ca_dir/private" $ca_keylength
+    create_private_key "$ca_private_key" $ca_keylength
 
     prompt "creating intermediate certificate signing request towards '$issuer_subj'"
-    create_ca_csr "$ca_dir" "$ca_cnf" $extension
+    create_ca_csr $extension
 
-    protect_private_key "$ca_dir/private"
+    protect_private_key "$ca_private_key"
 
     prompt "signing intermediate certificate with CA '$issuer_subj'"
-    sign_ca_csr "$ca_dir" $extension
+    sign_ca_csr $extension
 
     if [ ! -z "$crlUrl" ]; then
         prompt "update revocation list for issuer CA '$ca_subj'"
@@ -83,18 +86,18 @@ function create_intermediate_ca {
     restore_ca
 
     prompt "converting CA certificate into DER and Text format"
-    convert_cert "$ca_dir/certs/cert.pem"
+    convert_cert "$ca_certificate"
 
     prompt "creating certificate chain"
-    if [ -e "$issuer_dir/certs/chain.pem" ]; then
-        cat "$ca_dir/certs/cert.pem" "$issuer_dir/certs/chain.pem" > "$ca_dir/certs/chain.pem"
+    if [ -e "$issuer_ca_dir/chain.pem" ]; then
+        cat "$ca_certificate" "$issuer_ca_dir/chain.pem" > "$ca_cert_dir/chain.pem"
     else
-        cat "$ca_dir/certs/cert.pem" "$issuer_dir/certs/cert.pem" > "$ca_dir/certs/chain.pem"
+        cat "$ca_certificate" "$issuer_certificate" > "$ca_cert_dir/chain.pem"
     fi
-    puts "$ca_dir/certs/chain.pem"
+    puts "$ca_cert_dir/chain.pem"
 
     prompt "unfolding certificate chain"
-    unfold_chain "$ca_dir/certs/chain.pem"
+    unfold_chain "$ca_cert_dir/chain.pem"
 
     if [ ! -z "$crlUrl" ]; then
         prompt "update revocation list for CA '$ca_subj'"
@@ -106,34 +109,32 @@ function create_intermediate_ca {
 }
 
 function create_ocsp {
-    ca_dir="$1" && shift
+    ca="$1" && shift
 
-    prepare_ca "$ca_dir"
-    use_ca "$ca_dir"
+    load_ca "$ca"
 
     prompt "creating OCSP private key for '$ca_subj'"
-    create_private_key "$ca_dir/ocsp" $cert_bits
+    create_private_key "$ca_ocsp_private_key" $cert_bits
 
     prompt "creating OCSP certificate for '$ca_subj'"
-    create_ocsp_csr "$ca_dir" "$ca_cnf"
+    create_ocsp_csr
 
-    protect_private_key "$ca_dir/ocsp/"
+    protect_private_key "$ca_ocsp_private_key"
 
     prompt "signing OCSP certificate with CA '$ca_subj'"
-    sign_ocsp_csr "$ca_dir" $crl_days
+    sign_ocsp_csr $crl_days
 
     prompt "converting OCSP certificate into DER and Text format"
-    convert_cert "$ca_dir/ocsp/cert.pem"
+    convert_cert "$ca_ocsp_certificate"
 }
 
 function revoke_ca {
-    ca_dir="$1" && shift
+    ca="$1" && shift
 
-    prepare_ca "$ca_dir"
-    use_ca "$ca_dir"
+    load_ca "$ca"
 
     prompt "revoking CA '$ca_subj' from CA '$issuer_subj'"
-    revoke_ca_cert "$ca_dir"
+    revoke_ca_cert
 
     if [ ! -z "$crlUrl" ]; then
         prompt "update revocation list for CA '$ca_subj'"
@@ -142,14 +143,14 @@ function revoke_ca {
 }
 
 function info_ca {
-    ca_dir="$1" && shift
+    ca="$1" && shift
 
-    use_ca "$ca_dir"
+    use_ca "$ca"
 
-    issuer=`openssl x509 -in $ca_dir/certs/cert.pem -noout -issuer`
-    subject=`openssl x509 -in $ca_dir/certs/cert.pem -noout -subject`
-    notbefore=`openssl x509 -in $ca_dir/certs/cert.pem -noout -dates | head -n1`
-    notafter=`openssl x509 -in $ca_dir/certs/cert.pem -noout -dates | tail -n1`
+    issuer=`openssl x509 -in $ca_certificate -noout -issuer`
+    subject=`openssl x509 -in $ca_certificate -noout -subject`
+    notbefore=`openssl x509 -in $ca_certificate -noout -dates | head -n1`
+    notafter=`openssl x509 -in $ca_certificate -noout -dates | tail -n1`
 
     echo "###############################"
     echo "CA: $ca_dir"
