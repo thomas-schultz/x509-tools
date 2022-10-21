@@ -9,7 +9,7 @@ if [ -z "$OPENSSL_CSR_CNF" ]; then
     OPENSSL_CSR_CNF="${base}/config/csr.cnf"
 fi
 
-VERSION='x509-tools 2022-03-08 18:44:28';
+VERSION='x509-tools 2022-10-21 10:44:10';
 AUTHOR="Thomas Wild (thomas@t-schultz.de)"
 REPO="https://github.com/thomas-schultz/x509-tools"
 
