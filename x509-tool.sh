@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # load libs
-base="$( cd "$( dirname "${BASH_SOURCE[0]}" )" > /dev/null && pwd )"
+base="$( cd "$( dirname "$( realpath "${BASH_SOURCE[0]}")" )" > /dev/null && pwd )"
 if [ -z "$OPENSSL_CA_CNF" ]; then
     OPENSSL_CA_CNF="${base}/config/ca.cnf"
 fi
