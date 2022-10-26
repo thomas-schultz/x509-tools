@@ -56,7 +56,7 @@ source: https://github.com/thomas-schultz/x509-tools
 
  update <type>:     updates x509 objects
     crl <folder>                updates the CRL of the given CA
-    ocsp <folder>               renews the ocsp signing certificate
+    ocsp <folder>               updates the certificate revocation database
 
  revoke <type>:     revokes a x509 objects
     ca <folder>                 revokes a intermediate CA
