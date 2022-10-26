@@ -1,0 +1,5 @@
+tests/end-ca/
+tests/root-ca/
+tests/sub-ca/
+tests/sub2-ca/
+tests/test.t
