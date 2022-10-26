@@ -134,6 +134,16 @@ function test_revoke_client {
 
 function test_update_ca_crl {
     echo -e "\ntesting ${FUNCNAME[0]}\n"
+    ./x509-tool.sh $verbose update crl root-ca --passin Password1 ; it $? ${FUNCNAME[0]}
+}
+
+function test_update_ca_ocsp {
+    echo -e "\ntesting ${FUNCNAME[0]}\n"
+    ./x509-tool.sh $verbose update ocsp root-ca --passin Password1 ; it $? ${FUNCNAME[0]}
+}
+
+function test_update_ca {
+    echo -e "\ntesting ${FUNCNAME[0]}\n"
     ./x509-tool.sh $verbose update ca root-ca --passin Password1 ; it $? ${FUNCNAME[0]}
 }
 
@@ -167,6 +177,8 @@ test_create_client_with_dns_and_ip
 test_create_client_with_san_and_upn
 test_revoke_client
 test_update_ca_crl
+test_update_ca_ocsp
+test_update_ca
 test_list_ca
 test_list_subca
 

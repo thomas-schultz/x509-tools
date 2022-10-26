@@ -78,6 +78,12 @@ function sign_ocsp_csr {
     puts "$ca_ocsp_dir/cert.pem"
 }
 
+function update_db {
+    puts "openssl ca $batch_mode -config $ca_cnf $passin -updatedb"
+    eval openssl ca $batch_mode -config $ca_cnf $passin -updatedb
+    cont $?
+}
+
 function create_user_csr {
     user_cnf="$1" && shift
     name="$1" && shift
