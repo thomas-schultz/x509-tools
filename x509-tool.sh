@@ -28,10 +28,11 @@ rand="openssl rand -hex 8"
 
 function show_usage {
     cat << EOF
-usage:  ./x509-tool.sh <command> <subcommand> [<args>] [<options>]
-author: Thomas Wild (thomas@t-schultz.de)
-source: https://github.com/thomas-schultz/x509-tools
+author:  ${AUTHOR}
+source:  ${REPO}
+licence: $( sed -n '1p' LICENSE | xargs ) $( sed -n '2p' LICENSE | xargs )
 
+usage:   ./x509-tool.sh <command> <subcommand> [<args>] [<options>]
  define <type>:     defines or updates CA settings (presets.cnf)
     ca <folder>                 for Root-CAs
     subca <folder> <issuer>     for intermediate CAs

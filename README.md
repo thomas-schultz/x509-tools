@@ -4,10 +4,11 @@ This tool is a wrapper for openssl written for linux bash.
 
 
 ```
-usage:  ./x509-tool.sh <command> <subcommand> [<args>] [<options>]
-author: Thomas Wild (thomas@t-schultz.de)
-source: https://github.com/thomas-schultz/x509-tools
+author:  Thomas Wild (thomas@t-schultz.de)
+source:  https://github.com/thomas-schultz/x509-tools
+licence: GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
 
+usage:   ./x509-tool.sh <command> <subcommand> [<args>] [<options>]
  define <type>:     defines or updates CA settings (presets.cnf)
     ca <folder>                 for Root-CAs
     subca <folder> <issuer>     for intermediate CAs
@@ -46,6 +47,7 @@ source: https://github.com/thomas-schultz/x509-tools
 
 options:
     -h/--help               shows this output
+    --version               shows version information
     -v/--verbose            verbose output
     -i/--interactive        interactive user inputs
     -b/--bits <number>      set key length
@@ -64,7 +66,9 @@ options:
         O:          organizationName
         OU:         organizationalUnitName
         CN:         commonName
-        DNS/SAN:    subjaltname
+        DNS:        subjaltname DNS
+        IP:         subjaltname IP
+        UPN:        subjaltname UPN (otherName)
         @/E:        emailAddress
         CRL:        crlUrl
         OCSP:       ocspUrl
