@@ -128,6 +128,15 @@ function create_ocsp {
     convert_cert "$ca_ocsp_certificate"
 }
 
+function update_ocsp {
+    ca="$1" && shift
+
+    load_ca "$ca"
+
+    prompt "updating certificate database for '$ca_subj'"
+    update_db
+}
+
 function revoke_ca {
     ca="$1" && shift
 

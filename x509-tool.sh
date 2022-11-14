@@ -57,8 +57,7 @@ usage:   ./x509-tool.sh <command> <subcommand> [<args>] [<options>]
 
  update <type>:     updates x509 objects
     crl <folder>                updates the CRL of the given CA
-    ocsp <folder>               not yet implemented:
-                                renews the ocsp signing certificate
+    ocsp <folder>               updates the certificate revocation database
 
  revoke <type>:     revokes a x509 objects
     ca <folder>                 revokes a intermediate CA
@@ -390,12 +389,13 @@ function update {
   case "$type" in
     ca)
         update_crl $name
+        update_ocsp $name
         ;;
     crl)
         update_crl $name
         ;;
     ocsp)
-        echo "NOT YET IMPLEMENTED" && exit 1
+        update_ocsp $name
         ;;
     *)
         echo "ERROR: unknown command 'update $type'" && exit 1
