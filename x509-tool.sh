@@ -214,6 +214,7 @@ while [ "$1" != "" ]; do
     esac
     shift
 done
+echo "FIXEDARGS=${FIXEDARGS[*]}"
 
 function main {
     action="$1" && shift
