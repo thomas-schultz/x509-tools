@@ -51,7 +51,8 @@ function test_create_ca_with_crl_and_ocsp {
     export crl_validity=365
     ./x509-tool.sh $verbose define ca root-ca -C="DE" -ST="state" -O="DotOrg" -CN="Thomas Root-CA" -E="mail@testing.org" -b 2048 -d 7200 -p policy_strict; it $? ${FUNCNAME[0]}
     [ -z "$verbose" ] || cat root-ca/presets.cnf
-    ./x509-tool.sh $verbose create ca root-ca --passout Password1; it $? ${FUNCNAME[0]}
+    # Don't use passout here, because ocsp server does not support passin.
+    ./x509-tool.sh $verbose create ca root-ca; it $? ${FUNCNAME[0]}
 }
 
 function test_create_subca {
@@ -157,6 +158,14 @@ function test_list_subca {
     ./x509-tool.sh $verbose list subca sub-ca; it $? ${FUNCNAME[0]}
 }
 
+function test_run_ocsp_responder {
+    echo -e "\ntesting ${FUNCNAME[0]}\n"
+    ./x509-tool.sh "$verbose" run ocsp root-ca 9080 &
+    pid=$!
+    it $? "${FUNCNAME[0]}"
+    kill "$pid"
+}
+
 echo -e "\n#test $(date)" > $OUT
 
 test_create_ca
@@ -181,6 +190,7 @@ test_update_ca_ocsp
 test_update_ca
 test_list_ca
 test_list_subca
+test_run_ocsp_responder
 
 cat $OUT
 openssl version

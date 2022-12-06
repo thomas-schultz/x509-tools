@@ -69,6 +69,8 @@ usage:   ./x509-tool.sh <command> <subcommand> [<args>] [<options>]
     signer <name>               revokes a signer certificate
                                 (name can be folder or serial)
 
+ run ocsp <folder> <port>  runs an ocsp server
+
 options:
     -h/--help               shows this output
     --version               shows version information
@@ -214,7 +216,6 @@ while [ "$1" != "" ]; do
     esac
     shift
 done
-echo "FIXEDARGS=${FIXEDARGS[*]}"
 
 function main {
     action="$1" && shift
@@ -244,6 +245,9 @@ function main {
             ;;
         revoke)
             revoke "$sub" "$@"
+            ;;
+        run)
+            run "$sub" "$@"
             ;;
         *)
             echo "ERROR: unknown command '$action'" && exit 1
@@ -430,6 +434,21 @@ function revoke {
             ;;
         *)
             echo "ERROR: unknown command 'revoke $type'" && exit 1
+    esac
+}
+
+function run {
+    type="$1" && shift
+
+    case "$type" in
+        ocsp)
+            folder="$1" && shift
+            port="$1" && shift
+
+            run_ocsp_responder "$folder" "$port"
+            ;;
+        *)
+            echo "ERROR: unknown command 'run $type'" && exit 1
     esac
 }
 
