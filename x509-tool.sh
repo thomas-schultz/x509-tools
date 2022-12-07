@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # load libs
+# shellcheck source-path=SCRIPTDIR
 base="$( cd "$( dirname "$( realpath "${BASH_SOURCE[0]}")" )" > /dev/null && pwd )"
 if [ -z "$OPENSSL_CA_CNF" ]; then
     OPENSSL_CA_CNF="${base}/config/ca.cnf"
@@ -20,11 +21,11 @@ source "${base}/lib/user.sh"
 
 
 # args
-batch_mode="-batch"
-output_mode="2>/dev/null"
+export batch_mode="-batch"
+export output_mode="2>/dev/null"
 
 # use as random generator
-rand="openssl rand -hex 8"
+export rand="openssl rand -hex 8"
 
 function show_usage {
     cat << EOF
@@ -107,39 +108,39 @@ fi
 FIXEDARGS=()
 # parse args
 while [ "$1" != "" ]; do
-    PARAM=`echo $1 | awk -F= '{print $1}'`
-    VALUE=`echo $1 | awk -F= '{print $2}'`
+    PARAM=$(echo "$1" | awk -F= '{print $1}')
+    VALUE=$(echo "$1" | awk -F= '{print $2}')
     case $PARAM in
         --version)
             echo "$VERSION ($REPO)" && exit 0
             ;;
         -v | --verbose)
-            verbose=1
-            output_mode="2>&1"
+            export verbose=1
+            export output_mode="2>&1"
             ;;
         -i | --interactive)
-            batch_mode=""
+            export batch_mode=""
             ;;
         --ask)
-            passout=" "
-            pkcs12=" "
+            export passout=" "
+            export pkcs12=" "
             ;;
         --passin)
-            pw=$2 && shift
-            passin="-passin pass:$pw"
-            passedin="-passout pass:$pw"
+            export pw="$2" && shift
+            export passin="-passin pass:$pw"
+            export passedin="-passout pass:$pw"
             ;;
         --passout)
-            pw=$2 && shift
-            passout="-passout pass:$pw"
-            passedout="-passin pass:$pw"
+            export pw="$2" && shift
+            export passout="-passout pass:$pw"
+            export passedout="-passin pass:$pw"
             ;;
         --pkcs12)
-            pkcs12=$2 && shift
-            pkcs12_passout="-passout pass:$pkcs12"
+            export pkcs12="$2" && shift
+            export pkcs12_passout="-passout pass:$pkcs12"
             ;;
         --ecdsa-curve)
-            ecdsa_curve=$2 && shift
+            ecdsa_curve="$2" && shift
             if [[ "${ecdsa_curve}" == 'ED25519' ]]; then
                 [ -n "${pw}" ] && passout="-pass pass:${pw}"
                 ecdsa_curve_genpkey="-algorithm ${ecdsa_curve}"
@@ -150,7 +151,7 @@ while [ "$1" != "" ]; do
             fi
             ;;
         -subj)
-            subj=$2 && shift
+            subj="$2" && shift
             set_subject "$subj"
             ;;
         -C)
@@ -193,13 +194,13 @@ while [ "$1" != "" ]; do
             set_value "issuerUrl" "$VALUE"
             ;;
         -p|--policy)
-            export policy=$2 && shift
+            export policy="$2" && shift
             ;;
         -b|--bits)
-            export bits=$2 && shift
+            export bits="$2" && shift
             ;;
         -d|--days)
-            export days=$2 && shift
+            export days="$2" && shift
             ;;
         -h|--help)
             show_usage && exit 0
@@ -215,33 +216,33 @@ while [ "$1" != "" ]; do
 done
 
 function main {
-    action=$1 && shift
-    sub=$1 && shift
+    action="$1" && shift
+    sub="$1" && shift
     if [ -z "$sub" ]; then
         show_usage && exit 1
     fi
 
     case "$action" in
         define)
-            define $sub $*
+            define "$sub" "$@"
             ;;
         create)
-            create $sub $*
+            create "$sub" "$@"
             ;;
         request)
-            request $sub $*
+            request "$sub" "$@"
             ;;
         export)
-            export_cert $sub $*
+            export_cert "$sub" "$@"
             ;;
         list)
-            list $sub $*
+            list "$sub" "$@"
             ;;
         update)
-            update $sub $*
+            update "$sub" "$@"
             ;;
         revoke)
-            revoke $sub $*
+            revoke "$sub" "$@"
             ;;
         *)
             echo "ERROR: unknown command '$action'" && exit 1
@@ -254,21 +255,21 @@ function define {
 
     case "$type" in
         ca)
-            [ -z $bits ] || export ca_keylength=$bits
-            [ -z $days ] || export ca_days=$days
-            define_ca $name
+            [ -z "$bits" ] || export ca_keylength="$bits"
+            [ -z "$days" ] || export ca_days="$days"
+            define_ca "$name"
             ;;
         subca)
-            [ -z $bits ] || export ca_keylength=$bits
-            [ -z $days ] || export ca_days=$days
-            [ -z $1 ] && echo "ERROR: missing issuer path for 'define $type'" && exit 1
-            define_ca $name $*
+            [ -z "$bits" ] || export ca_keylength="$bits"
+            [ -z "$days" ] || export ca_days="$days"
+            [ -z "$1" ] && echo "ERROR: missing issuer path for 'define $type'" && exit 1
+            define_ca "$name" "$@"
             ;;
         endca)
-            [ -z $bits ] || export ca_keylength=$bits
-            [ -z $days ] || export ca_days=$days
-            [ -z $1 ] && echo "ERROR: missing issuer path for 'define $type'" && exit 1
-            define_ca $name $*
+            [ -z "$bits" ] || export ca_keylength="$bits"
+            [ -z "$days" ] || export ca_days="$days"
+            [ -z "$1" ] && echo "ERROR: missing issuer path for 'define $type'" && exit 1
+            define_ca "$name" "$@"
             ;;
         *)
             echo "ERROR: unknown command 'define $type'" && exit 1
@@ -281,37 +282,37 @@ function create {
 
     case "$type" in
         ca)
-            [ -z $bits ] || export ca_keylength=$bits
-            [ -z $days ] || export ca_days=$days
-            create_ca $name
+            [ -z "$bits" ] || export ca_keylength="$bits"
+            [ -z "$days" ] || export ca_days="$days"
+            create_ca "$name"
             ;;
         subca)
-            [ -z $bits ] || export ca_keylength=$bits
-            [ -z $days ] || export ca_days=$days
-            create_sub_ca $name
+            [ -z "$bits" ] || export ca_keylength="$bits"
+            [ -z "$days" ] || export ca_days="$days"
+            create_sub_ca "$name"
             ;;
         endca)
-            [ -z $bits ] || export ca_keylength=$bits
-            [ -z $days ] || export ca_days=$days
-            create_end_ca $name
+            [ -z "$bits" ] || export ca_keylength="$bits"
+            [ -z "$days" ] || export ca_days="$days"
+            create_end_ca "$name"
             ;;
         server)
-            [ -z $bits ] || export cert_keylength=$bits
-            [ -z $days ] || export cert_days=$days
-            [ -z $1 ] && echo "ERROR: missing issuer path for 'create $type'" && exit 1
-            create_server_certificate $name $*
+            [ -z "$bits" ] || export cert_keylength="$bits"
+            [ -z "$days" ] || export cert_days="$days"
+            [ -z "$1" ] && echo "ERROR: missing issuer path for 'create $type'" && exit 1
+            create_server_certificate "$name" "$@"
             ;;
         client)
-            [ -z $bits ] || export cert_keylength=$bits
-            [ -z $days ] || export cert_days=$days
-            [ -z $1 ] && echo "ERROR: missing issuer path for 'create $type'" && exit 1
-            create_client_certificate $name $*
+            [ -z "$bits" ] || export cert_keylength="$bits"
+            [ -z "$days" ] || export cert_days="$days"
+            [ -z "$1" ] && echo "ERROR: missing issuer path for 'create $type'" && exit 1
+            create_client_certificate "$name" "$@"
             ;;
         signer)
-            [ -z $bits ] || export cert_keylength=$bits
-            [ -z $days ] || export cert_days=$days
-            [ -z $1 ] && echo "ERROR: missing issuer path for 'create $type'" && exit 1
-            create_signer_certificate $name $*
+            [ -z "$bits" ] || export cert_keylength="$bits"
+            [ -z "$days" ] || export cert_days="$days"
+            [ -z "$1" ] && echo "ERROR: missing issuer path for 'create $type'" && exit 1
+            create_signer_certificate "$name" "$@"
             ;;
         *)
             echo "ERROR: unknown command 'create $type'" && exit 1
@@ -324,26 +325,26 @@ function request {
 
     case "$type" in
         subca)
-            [ -z $bits ] || export ca_keylength=$bits
-            [ -z $days ] || export ca_days=$days
-            create_sub_ca $name
+            [ -z "$bits" ] || export ca_keylength="$bits"
+            [ -z "$days" ] || export ca_days="$days"
+            create_sub_ca "$name"
             ;;
         endca)
-            [ -z $bits ] || export ca_keylength=$bits
-            [ -z $days ] || export ca_days=$days
-            create_end_ca $name
+            [ -z "$bits" ] || export ca_keylength="$bits"
+            [ -z "$days" ] || export ca_days="$days"
+            create_end_ca "$name"
             ;;
         server)
-            [ -z $bits ] || export cert_keylength=$bits
-            [ -z $days ] || export cert_days=$days
-            [ -z $1 ] && echo "ERROR: missing issuer path for 'create $type'" && exit 1
-            create_server_certificate $name $*
+            [ -z "$bits" ] || export cert_keylength="$bits"
+            [ -z "$days" ] || export cert_days="$days"
+            [ -z "$1" ] && echo "ERROR: missing issuer path for 'create $type'" && exit 1
+            create_server_certificate "$name" "$@"
             ;;
         client)
-            [ -z $bits ] || export cert_keylength=$bits
-            [ -z $days ] || export cert_days=$days
-            [ -z $1 ] && echo "ERROR: missing issuer path for 'create $type'" && exit 1
-            create_client_certificate $name $*
+            [ -z "$bits" ] || export cert_keylength="$bits"
+            [ -z "$days" ] || export cert_days="$days"
+            [ -z "$1" ] && echo "ERROR: missing issuer path for 'create $type'" && exit 1
+            create_client_certificate "$name" "$@"
             ;;
         *)
             echo "ERROR: unknown command 'request $type'" && exit 1
@@ -355,9 +356,9 @@ function export_cert {
 
     case "$type" in
         user|client|server|signer)
-            [ -z $1 ] && echo "ERROR: missing certificate name for 'export'" && exit 1
-            [ -z $2 ] && echo "ERROR: missing issuer path for 'export'" && exit 1
-            export_pkcs12 $*
+            [ -z "$1" ] && echo "ERROR: missing certificate name for 'export'" && exit 1
+            [ -z "$2" ] && echo "ERROR: missing issuer path for 'export'" && exit 1
+            export_pkcs12 "$@"
             ;;
         *)
             echo "ERROR: unknown command 'export $type'" && exit 1
@@ -369,12 +370,10 @@ function list {
 
     case "$type" in
         ca|subca)
-            if [ -t $1 ]; then
-                for file in `find . -name "presets.cnf"`; do
-                    info_ca `dirname $file`
-                done
+            if [ -t "$1" ]; then
+                find . -name "presets.cnf" -exec bash -c 'info_ca $(dirname "$0")' {} \;
             else
-                info_ca $1
+                info_ca "$1"
             fi
             ;;
         *)
@@ -388,14 +387,14 @@ function update {
 
   case "$type" in
     ca)
-        update_crl $name
-        update_ocsp $name
+        update_crl "$name"
+        update_ocsp "$name"
         ;;
     crl)
-        update_crl $name
+        update_crl "$name"
         ;;
     ocsp)
-        update_ocsp $name
+        update_ocsp "$name"
         ;;
     *)
         echo "ERROR: unknown command 'update $type'" && exit 1
@@ -408,29 +407,29 @@ function revoke {
 
     case "$type" in
         ca)
-            revoke_ca $name
+            revoke_ca "$name"
             ;;
         subca)
-            revoke_ca $name
+            revoke_ca "$name"
             ;;
         endca)
-            revoke_ca $name
+            revoke_ca "$name"
             ;;
         server)
-            [ -z $1 ] && echo "ERROR: missing issuer path for 'revoke $type'" && exit 1
-            revoke_user_certificate $name $*
+            [ -z "$1" ] && echo "ERROR: missing issuer path for 'revoke $type'" && exit 1
+            revoke_user_certificate "$name" "$@"
             ;;
         client)
-            [ -z $1 ] && echo "ERROR: missing issuer path for 'revoke $type'" && exit 1
-            revoke_user_certificate $name $*
+            [ -z "$1" ] && echo "ERROR: missing issuer path for 'revoke $type'" && exit 1
+            revoke_user_certificate "$name" "$@"
             ;;
         signer)
-            [ -z $1 ] && echo "ERROR: missing issuer path for 'revoke $type'" && exit 1
-            revoke_user_certificate $name $*
+            [ -z "$1" ] && echo "ERROR: missing issuer path for 'revoke $type'" && exit 1
+            revoke_user_certificate "$name" "$@"
             ;;
         *)
             echo "ERROR: unknown command 'revoke $type'" && exit 1
     esac
 }
 
-main ${FIXEDARGS[@]}
+main "${FIXEDARGS[@]}"

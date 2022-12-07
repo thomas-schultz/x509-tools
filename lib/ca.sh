@@ -174,3 +174,5 @@ function info_ca {
     echo "-------------------------------"
     echo ""
 }
+
+export -f info_ca
