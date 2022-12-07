@@ -10,7 +10,7 @@ if [ -z "$OPENSSL_CSR_CNF" ]; then
     OPENSSL_CSR_CNF="${base}/config/csr.cnf"
 fi
 
-VERSION='x509-tools 2022-10-21 10:44:10';
+VERSION='x509-tools 2022-12-07 11:00:43';
 AUTHOR="Thomas Wild (thomas@t-schultz.de)"
 REPO="https://github.com/thomas-schultz/x509-tools"
 
@@ -68,6 +68,8 @@ usage:   ./x509-tool.sh <command> <subcommand> [<args>] [<options>]
                                 (name can be folder or serial)
     signer <name>               revokes a signer certificate
                                 (name can be folder or serial)
+
+ run ocsp <folder> <port>       runs an ocsp server
 
 options:
     -h/--help               shows this output
@@ -243,6 +245,9 @@ function main {
             ;;
         revoke)
             revoke "$sub" "$@"
+            ;;
+        run)
+            run "$sub" "$@"
             ;;
         *)
             echo "ERROR: unknown command '$action'" && exit 1
@@ -429,6 +434,21 @@ function revoke {
             ;;
         *)
             echo "ERROR: unknown command 'revoke $type'" && exit 1
+    esac
+}
+
+function run {
+    type="$1" && shift
+
+    case "$type" in
+        ocsp)
+            folder="$1" && shift
+            port="$1" && shift
+
+            run_ocsp_responder "$folder" "$port"
+            ;;
+        *)
+            echo "ERROR: unknown command 'run $type'" && exit 1
     esac
 }
 
