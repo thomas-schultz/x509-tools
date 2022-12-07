@@ -33,8 +33,7 @@ usage:   ./x509-tool.sh <command> <subcommand> [<args>] [<options>]
 
  update <type>:     updates x509 objects
     crl <folder>                updates the CRL of the given CA
-    ocsp <folder>               not yet implemented:
-                                renews the ocsp signing certificate
+    ocsp <folder>               updates the certificate revocation database
 
  revoke <type>:     revokes a x509 objects
     ca <folder>                 revokes a intermediate CA
@@ -44,6 +43,8 @@ usage:   ./x509-tool.sh <command> <subcommand> [<args>] [<options>]
                                 (name can be folder or serial)
     signer <name>               revokes a signer certificate
                                 (name can be folder or serial)
+
+ run ocsp <folder> <port>       runs an ocsp server
 
 options:
     -h/--help               shows this output

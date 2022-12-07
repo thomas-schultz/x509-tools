@@ -10,7 +10,7 @@ if [ -z "$OPENSSL_CSR_CNF" ]; then
     OPENSSL_CSR_CNF="${base}/config/csr.cnf"
 fi
 
-VERSION='x509-tools 2022-10-21 10:44:10';
+VERSION='x509-tools 2022-12-07 11:00:43';
 AUTHOR="Thomas Wild (thomas@t-schultz.de)"
 REPO="https://github.com/thomas-schultz/x509-tools"
 
@@ -69,7 +69,7 @@ usage:   ./x509-tool.sh <command> <subcommand> [<args>] [<options>]
     signer <name>               revokes a signer certificate
                                 (name can be folder or serial)
 
- run ocsp <folder> <port>  runs an ocsp server
+ run ocsp <folder> <port>       runs an ocsp server
 
 options:
     -h/--help               shows this output
