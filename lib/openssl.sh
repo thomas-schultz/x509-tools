@@ -195,6 +195,6 @@ function run_ocsp_responder {
     ca_cert="$folder/ca/cert.pem"
     log="$folder/ocsp.log"
 
-    puts "openssl ocsp -index $db -port $port -rsigner $rsigner -rkey $rkey -CA $ca_cert -text -out $log"
-    openssl ocsp -index "$db" -port "$port" -rsigner "$rsigner" -rkey "$rkey" -CA "$ca_cert" -text -out "$log" -nrequest 1
+    puts "openssl ocsp -index $db -port $port -rsigner $rsigner -rkey $rkey -CA $ca_cert -text -out $log -ignore_err"
+    openssl ocsp -index "$db" -port "$port" -rsigner "$rsigner" -rkey "$rkey" -CA "$ca_cert" -text -out "$log" -ignore_err
 }
