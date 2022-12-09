@@ -166,6 +166,25 @@ function test_run_ocsp_responder {
     kill "$pid"
 }
 
+function test_create_ca_special_characters {
+    echo -e "\ntesting ${FUNCNAME[0]}\n"
+    # ca_subject="\n "  # Line breaks or spaces at the end are unsupported
+    ca_subject="Root \$HOME CA\"😀"
+    rm -rf "$ca_subject"
+    ./x509-tool.sh $verbose define ca "$ca_subject" -C="DE" -ST="City" -O="DotOrg" -CN="Thomas Root-CA" -E="mail@testing.org" -b 2048 -p policy_strict; it $? ${FUNCNAME[0]}
+    [ -z "$verbose" ] || cat "$ca_subject"/presets.cnf
+    ./x509-tool.sh $verbose create ca "$ca_subject" --passout Password1; it $? ${FUNCNAME[0]}
+}
+
+function test_create_client_special_characters {
+    echo -e "\ntesting ${FUNCNAME[0]}\n"
+    ca_subject="Root \$HOME CA\"😀"
+    # client_subject="\$HOME\n"  # Line breaks or dollars in subject are unsupported
+    client_subject="Client @\"😀 "
+    ./x509-tool.sh $verbose create client "$client_subject" "$ca_subject" --pkcs12 "passphrase" -d 120 --passin Password1 -CN="$client_subject" -E="client1@dotorg.tld"; it $? ${FUNCNAME[0]}
+}
+
+
 echo -e "\n#test $(date)" > $OUT
 
 test_create_ca
@@ -191,6 +210,8 @@ test_update_ca
 test_list_ca
 test_list_subca
 test_run_ocsp_responder
+test_create_ca_special_characters
+test_create_client_special_characters
 
 cat $OUT
 openssl version

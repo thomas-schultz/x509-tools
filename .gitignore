@@ -2,4 +2,5 @@ tests/end-ca/
 tests/root-ca/
 tests/sub-ca/
 tests/sub2-ca/
+tests/Root\ $*
 tests/test.t
