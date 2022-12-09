@@ -4,19 +4,19 @@
 function create_server_certificate {
     name="$1" && shift
     ca="$1" && shift
-    create_user_certificate "$ca" "$name" "server_cert" $*
+    create_user_certificate "$ca" "$name" "server_cert" "$@"
 }
 
 function create_client_certificate {
     name="$1" && shift
     ca="$1" && shift
-    create_user_certificate "$ca" "$name" "client_cert" $*
+    create_user_certificate "$ca" "$name" "client_cert" "$@"
 }
 
 function create_signer_certificate {
     name="$1" && shift
     ca="$1" && shift
-    create_user_certificate "$ca" "$name" "signer_cert" $*
+    create_user_certificate "$ca" "$name" "signer_cert" "$@"
 }
 
 function create_user_certificate {
@@ -29,7 +29,7 @@ function create_user_certificate {
     mkdir -p "$ca_new_certs_dir/$name/"
 
     prompt "creating private key for $name'"
-    create_private_key "$ca_new_certs_dir/$name/key.pem" $keylength
+    create_private_key "$ca_new_certs_dir/$name/key.pem" "$keylength"
 
     csr_cnf="$ca_new_certs_dir/$name/cert.cnf"
     puts "append subjectAltNames to csr request"
@@ -44,7 +44,7 @@ function create_user_certificate {
     extract_san_from_csr "$csr_cnf" "$ca_csr_dir/$name-csr.txt"
 
     prompt "signing server certificate for '$name' with CA '$ca_subj'"
-    sign_user_csr "$ca_dir" "$csr_cnf" $cert_days $extension
+    sign_user_csr "$ca_dir" "$csr_cnf" "$cert_days" "$extension"
 
     protect_private_key "$ca_new_certs_dir/$name/key.pem"
 
@@ -93,7 +93,7 @@ function export_pkcs12 {
 
     prompt "exporting to pkcs12 format"
     puts "openssl pkcs12 -export $pkcs12_passout -inkey $ca_new_certs_dir/$name/key.pem -in $ca_new_certs_dir/$name/cert.pem -certfile $ca_new_certs_dir/$name/chain.pem -out $ca_new_certs_dir/$name.p12"
-    eval openssl pkcs12 -export $pkcs12_passout -inkey "$ca_new_certs_dir/$name/key.pem" -in "$ca_new_certs_dir/$name/cert.pem" -certfile "$ca_new_certs_dir/$name/chain.pem" -out "$ca_new_certs_dir/$name.p12" $output_mode
+    eval openssl pkcs12 -export "$pkcs12_passout" -inkey "$ca_new_certs_dir/$name/key.pem" -in "$ca_new_certs_dir/$name/cert.pem" -certfile "$ca_new_certs_dir/$name/chain.pem" -out "$ca_new_certs_dir/$name.p12" "$output_mode"
     cont $?
 
     echo "$pkcs12_passout" | sed 's/-passout pass://g' > "$ca_new_certs_dir/$name/export.pw"

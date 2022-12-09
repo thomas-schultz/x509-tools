@@ -62,11 +62,11 @@ function set_value {
 
 function set_subject {
     subj=$1
-    while `echo "$subj" | grep '/.=.' >/dev/null`; do
+    while $(echo "$subj" | grep '/.=.' >/dev/null); do
         #echo "$subj"
-        key=`echo "$subj" | sed -E 's/\/([^\/]?)=([^\/]*)(.*)?/\1/g'`
-        value=`echo "$subj" | sed -E 's/\/([^\/]?)=([^\/]*)(.*)?/\2/g'`
-        subj=`echo "$subj" | sed -E 's/\/([^\/]?)=([^\/]*)(.*)?/\3/g'`
+        key=$(echo "$subj" | sed -E 's/\/([^\/]?)=([^\/]*)(.*)?/\1/g')
+        value=$(echo "$subj" | sed -E 's/\/([^\/]?)=([^\/]*)(.*)?/\2/g')
+        subj=$(echo "$subj" | sed -E 's/\/([^\/]?)=([^\/]*)(.*)?/\3/g')
         set_value "$key" "$value"
     done
 }
@@ -81,13 +81,13 @@ function read_presets {
     unset issuer
     while IFS="=" read -r line; do
         [ -z "$line" ] || [[ "$line" =~ ^\#.* ]] && continue
-        key=`echo "$line" | awk -F "=" '{print $1}' | awk '{gsub(/^ +| +$/,"")} {print $0}'`
-        value=`echo "$line" | awk -F "=" '{print $2}' | awk '{gsub(/^ +| +$/,"")} {print $0}'`
+        key=$(echo "$line" | awk -F "=" '{print $1}' | awk '{gsub(/^ +| +$/,"")} {print $0}')
+        value=$(echo "$line" | awk -F "=" '{print $2}' | awk '{gsub(/^ +| +$/,"")} {print $0}')
         [ -z "$key" ] && continue
         [ -z "${!key}" ] || continue
         #echo "$key=$value"
         export "$key=$value"
-    done < $preset
+    done < "$preset"
 }
 
 function set_defaults {
@@ -106,14 +106,14 @@ function prepare_config {
     csr="$ca_dir/csr.cnf"
     presets="$ca_dir/presets.cnf"
     puts "creating preset file $presets"
-    echo -e "# presets for this CA\n" > $presets
+    echo -e "# presets for this CA\n" > "$presets"
 
     set_defaults
 
     # issuer path (none for Root-CAs)
-    printf "%-20s = %s\n" "self" "$ca_dir" >> $presets
-    [ -z $issuer ] && export issuer="$ca_dir"
-    printf "%-20s = %s\n" "issuer" "$issuer" >> $presets
+    printf "%-20s = %s\n" "self" "$ca_dir" >> "$presets"
+    [ -z "$issuer" ] && export issuer="$ca_dir"
+    printf "%-20s = %s\n" "issuer" "$issuer" >> "$presets"
 
     puts "creating config file $template"
     cp "$OPENSSL_CA_CNF" "$template"
@@ -125,31 +125,31 @@ function template_config {
     template="$1" && shift
     presets="$1" && shift
 
-    vars=`sed -n '/{{\(.*\)}}/p' $template | sed -E 's/.*\{\{\s+(.*)\s+\}\}.*/\1/'`
+    vars=$(sed -n '/{{\(.*\)}}/p' "$template" | sed -E 's/.*\{\{\s+(.*)\s+\}\}.*/\1/')
     for key in "${!defaults[@]}"; do
-        vars=`echo -e "$vars\n$key"`
+        vars=$(echo -e "$vars\n$key")
     done
     while read -r var; do
         value="${!var}"
         #echo "$var = $value"
         if [ -z "${value}" ]; then
-            sed -i -E "/.*\{\{\s+${var//\//\\/}\s+\}\}.*/d" $template
+            sed -i -E "/.*\{\{\s+${var//\//\\/}\s+\}\}.*/d" "$template"
         else
-            [ -z $presets ] || grep "$var" $presets >/dev/null 2>&1 || printf "%-20s = %s\n" "$var" "$value" >> $presets
-            sed -i -E "s/(.*)(\{\{\s+${var//\//\\/}\s+\}\})(.*)/\1${value//\//\\/}\3/" $template
+            [ -z "$presets" ] || grep "$var" "$presets" >/dev/null 2>&1 || printf "%-20s = %s\n" "$var" "$value" >> "$presets"
+            sed -i -E "s/(.*)(\{\{\s+${var//\//\\/}\s+\}\})(.*)/\1${value//\//\\/}\3/" "$template"
         fi
     done <<< "$vars"
 
     # clean up entries if they are empty
     if [ -z "$crlUrl" ]; then
-        sed -i -E "/.*crl_info.*/d" $template
-        sed -i -E "/.*issuer_info.*/d" $template
+        sed -i -E "/.*crl_info.*/d" "$template"
+        sed -i -E "/.*issuer_info.*/d" "$template"
     fi
     if [ -z "$ocspUrl" ]; then
-        sed -i -E "/.*ocsp_info.*/d" $template
+        sed -i -E "/.*ocsp_info.*/d" "$template"
     fi
     if [ -z "$issuerUrl" ]; then
-        sed -i -E "/.*issuer_info.*/d" $template
+        sed -i -E "/.*issuer_info.*/d" "$template"
     fi
 }
 
@@ -174,13 +174,13 @@ function prompt {
 }
 
 function puts {
-    [ -z $verbose ] || echo "$1"
+    [ -z "$verbose" ] || echo "$1"
 }
 
 function cont {
-    if [ $1 -ne 0 ]; then
+    if [ "$1" -ne 0 ]; then
         prompt "An error occurred, exited with code $1" red
-        exit $1
+        exit "$1"
     fi
 }
 
@@ -194,22 +194,22 @@ function load_ca {
     read_presets "$ca_dir/presets.cnf"
     export issuer_dir="$issuer"
     export issuer_cnf="$issuer/ca.cnf"
-    export ca_subj="CN="`grep commonName $ca_dir/presets.cnf | sed -e 's/.*=\s*\(\)/\1/'`
-    export issuer_subj="CN="`grep commonName $issuer/presets.cnf | sed -e 's/.*=\s*\(\)/\1/'`
+    export ca_subj="CN="$(grep commonName "$ca_dir"/presets.cnf | sed -e 's/.*=\s*\(\)/\1/')
+    export issuer_subj="CN="$(grep commonName "$issuer"/presets.cnf | sed -e 's/.*=\s*\(\)/\1/')
 
     keys=("certs" "crl_dir" "new_certs_dir" "database" "serial" "private_key" "certificate" "crl")
     for key in "${keys[@]}"; do
-        line="$( grep "^$key[[:space:]]\+=" $ca_cnf )"
-        value="$( echo $line | cut -d '=' -f2 | xargs )"
+        line="$( grep "^$key[[:space:]]\+=" "$ca_cnf" )"
+        value="$( echo "$line" | cut -d '=' -f2 | xargs )"
         value="$( dir=$ca_dir eval "echo $value" )"
-        export ca_$key=$value
+        export ca_"$key"="$value"
         if [ -z "$issuer" ]; then
-            unset issuer_$key
+            unset issuer_"$key"
         else
-            line="$( grep "^$key[[:space:]]\+=" $issuer_cnf )"
-            value="$( echo $line | cut -d '=' -f2 | xargs )"
+            line="$( grep "^$key[[:space:]]\+=" "$issuer_cnf" )"
+            value="$( echo "$line" | cut -d '=' -f2 | xargs )"
             value="$( dir=$issuer_dir eval "echo $value" )"
-            export issuer_$key=$value
+            export issuer_"$key"="$value"
         fi
     done
     export ca_cert_dir="$( dirname "$ca_certificate" )"
@@ -265,7 +265,7 @@ function append_sans {
                     san="otherName"
                     val="1.3.6.1.4.1.311.20.2.3;UTF8:$val"
                 fi
-                echo "$san.${count} = $val" >> $cnf
+                echo "$san.${count} = $val" >> "$cnf"
             fi
         done
         count=$(( count + 1 ))
@@ -292,8 +292,8 @@ function extract_san_from_csr {
     return
     count=0
     while read altname; do
-        san="$( echo $altname | cut -d ':' -f1 )"
-        value="$( echo $altname | cut -d ':' -f2 )"
+        san="$( echo "$altname" | cut -d ':' -f1 )"
+        value="$( echo "$altname" | cut -d ':' -f2 )"
         if [ "$san" == "IP Address" ]; then
           san="IP"
         fi

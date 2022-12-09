@@ -29,10 +29,10 @@ function create_ca {
     extension="v3_ca"
 
     prompt "creating CA private key for '$ca_subj'"
-    create_private_key "$ca_private_key" $ca_keylength
+    create_private_key "$ca_private_key" "$ca_keylength"
 
     prompt "creating CA certificate for '$ca_subj'"
-    create_self_signed_ca $ca_days $extension
+    create_self_signed_ca "$ca_days" "$extension"
 
     protect_private_key "$ca_private_key"
 
@@ -52,13 +52,13 @@ function create_ca {
 
 function create_sub_ca {
     issuer="$1" && shift
-    create_intermediate_ca "$issuer" "v3_sub_ca" $*
+    create_intermediate_ca "$issuer" "v3_sub_ca" "$@"
 }
 
 
 function create_end_ca {
     issuer="$1" && shift
-    create_intermediate_ca "$issuer" "v3_end_ca" $*
+    create_intermediate_ca "$issuer" "v3_end_ca" "$@"
 }
 
 function create_intermediate_ca {
@@ -68,15 +68,15 @@ function create_intermediate_ca {
     load_ca "$ca"
 
     prompt "creating intermediate private key for '$ca_subj'"
-    create_private_key "$ca_private_key" $ca_keylength
+    create_private_key "$ca_private_key" "$ca_keylength"
 
     prompt "creating intermediate certificate signing request towards '$issuer_subj'"
-    create_ca_csr $extension
+    create_ca_csr "$extension"
 
     protect_private_key "$ca_private_key"
 
     prompt "signing intermediate certificate with CA '$issuer_subj'"
-    sign_ca_csr $extension
+    sign_ca_csr "$extension"
 
     if [ ! -z "$crlUrl" ]; then
         prompt "update revocation list for issuer CA '$ca_subj'"
@@ -114,7 +114,7 @@ function create_ocsp {
     load_ca "$ca"
 
     prompt "creating OCSP private key for '$ca_subj'"
-    create_private_key "$ca_ocsp_private_key" $cert_bits
+    create_private_key "$ca_ocsp_private_key" "$cert_bits"
 
     prompt "creating OCSP certificate for '$ca_subj'"
     create_ocsp_csr
@@ -122,7 +122,7 @@ function create_ocsp {
     protect_private_key "$ca_ocsp_private_key"
 
     prompt "signing OCSP certificate with CA '$ca_subj'"
-    sign_ocsp_csr $crl_days
+    sign_ocsp_csr "$crl_days"
 
     prompt "converting OCSP certificate into DER and Text format"
     convert_cert "$ca_ocsp_certificate"
@@ -156,10 +156,10 @@ function info_ca {
 
     use_ca "$ca"
 
-    issuer=`openssl x509 -in $ca_certificate -noout -issuer`
-    subject=`openssl x509 -in $ca_certificate -noout -subject`
-    notbefore=`openssl x509 -in $ca_certificate -noout -dates | head -n1`
-    notafter=`openssl x509 -in $ca_certificate -noout -dates | tail -n1`
+    issuer=$(openssl x509 -in "$ca_certificate" -noout -issuer)
+    subject=$(openssl x509 -in "$ca_certificate" -noout -subject)
+    notbefore=$(openssl x509 -in "$ca_certificate" -noout -dates | head -n1)
+    notafter=$(openssl x509 -in "$ca_certificate" -noout -dates | tail -n1)
 
     echo "###############################"
     echo "CA: $ca_dir"
