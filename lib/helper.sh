@@ -173,6 +173,23 @@ function prompt {
     echo -e "${COLOR}$1${NONE}"
 }
 
+# Wrap openssl for configurable output verbosity
+function openssl_func {
+    if [[ -n "$verbose" ]]; then
+        # Show the to-be-executed openssl command
+        msg="openssl"
+        for arg in "$@"; do
+            msg+=$(printf " %q" "$arg")
+        done
+        echo "$msg"
+        # Execute openssl and show stderr on stdout
+        openssl "$@" 2>&1
+    else
+        # Execute openssl and hide stderr output
+        openssl "$@" 2>/dev/null
+    fi
+}
+
 function puts {
     [ -z "$verbose" ] || echo "$1"
 }
@@ -230,7 +247,7 @@ function load_ca {
 
 function restore_ca {
     load_ca "$ca_old"
-    passin=""
+    passin=()
 }
 
 function use_ca {

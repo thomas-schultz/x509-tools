@@ -83,7 +83,7 @@ function revoke_user_certificate {
     revoke_client_cert "$cert"
 
     # hack to pass passphrase
-    passedout="$passin"
+    passedout=("${passin[@]}")
     update_crl "$ca_dir"
 }
 
@@ -92,11 +92,10 @@ function export_pkcs12 {
     use_ca "$1" && shift
 
     prompt "exporting to pkcs12 format"
-    puts "openssl pkcs12 -export $pkcs12_passout -inkey $ca_new_certs_dir/$name/key.pem -in $ca_new_certs_dir/$name/cert.pem -certfile $ca_new_certs_dir/$name/chain.pem -out $ca_new_certs_dir/$name.p12"
-    eval openssl pkcs12 -export "$pkcs12_passout" -inkey "$ca_new_certs_dir/$name/key.pem" -in "$ca_new_certs_dir/$name/cert.pem" -certfile "$ca_new_certs_dir/$name/chain.pem" -out "$ca_new_certs_dir/$name.p12" "$output_mode"
+    openssl_func pkcs12 -export "${pkcs12_passout[@]}" -inkey "$ca_new_certs_dir/$name/key.pem" -in "$ca_new_certs_dir/$name/cert.pem" -certfile "$ca_new_certs_dir/$name/chain.pem" -out "$ca_new_certs_dir/$name.p12"
     cont $?
 
-    echo "$pkcs12_passout" | sed 's/-passout pass://g' > "$ca_new_certs_dir/$name/export.pw"
+    sed 's/^pass://' <<< "${pkcs12_passout[1]}" > "$ca_new_certs_dir/$name/export.pw"
     cont $?
     puts "$ca_new_certs_dir/$name.p12"
 }

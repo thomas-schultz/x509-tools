@@ -22,7 +22,6 @@ source "${base}/lib/user.sh"
 
 # args
 export batch_mode="-batch"
-export output_mode="2>/dev/null"
 
 # use as random generator
 export rand="openssl rand -hex 8"
@@ -118,37 +117,36 @@ while [ "$1" != "" ]; do
             ;;
         -v | --verbose)
             export verbose=1
-            export output_mode="2>&1"
             ;;
         -i | --interactive)
             export batch_mode=""
             ;;
         --ask)
-            export passout=" "
+            export passout=()
             export pkcs12=" "
             ;;
         --passin)
             export pw="$2" && shift
-            export passin="-passin pass:$pw"
-            export passedin="-passout pass:$pw"
+            export passin=(-passin "pass:$pw")
+            export passedin=(-passout "pass:$pw")
             ;;
         --passout)
             export pw="$2" && shift
-            export passout="-passout pass:$pw"
-            export passedout="-passin pass:$pw"
+            export passout=(-passout "pass:$pw")
+            export passedout=(-passin "pass:$pw")
             ;;
         --pkcs12)
             export pkcs12="$2" && shift
-            export pkcs12_passout="-passout pass:$pkcs12"
+            export pkcs12_passout=(-passout "pass:$pkcs12")
             ;;
         --ecdsa-curve)
             ecdsa_curve="$2" && shift
             if [[ "${ecdsa_curve}" == 'ED25519' ]]; then
-                [ -n "${pw}" ] && passout="-pass pass:${pw}"
-                ecdsa_curve_genpkey="-algorithm ${ecdsa_curve}"
+                [ -n "${pw}" ] && passout=(-pass "pass:${pw}")
+                ecdsa_curve_genpkey=(-algorithm "${ecdsa_curve}")
                 export ecdsa_curve_genpkey
             else
-                ecdsa_curve_x509_tools="-name $ecdsa_curve"
+                ecdsa_curve_x509_tools=(-name "$ecdsa_curve")
                 export ecdsa_curve_x509_tools
             fi
             ;;
