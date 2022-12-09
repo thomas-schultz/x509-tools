@@ -137,9 +137,10 @@ function unfold_chain {
     basename=$(basename "$input")
     dirname=$(dirname "$input")
 
-    cat "$input" | \
+    input_data=$(cat "$input")
+    (cd "$dirname" && \
         awk 'split_after==1{n++;split_after=0} /-----END CERTIFICATE-----/ {split_after=1} \
-        {print > "'$dirname'/ca." n+1 ".pem"}'
+        {print > "ca." n+1 ".pem"}' <<< "$input_data")
     count=$(grep -c "END CERTIFICATE" "$input")
     for i in $(seq 1 "$count"); do
         puts "$dirname/ca.$i.pem"
