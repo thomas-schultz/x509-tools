@@ -216,14 +216,14 @@ function load_ca {
 
     keys=("certs" "crl_dir" "new_certs_dir" "database" "serial" "private_key" "certificate" "crl")
     for key in "${keys[@]}"; do
-        line="$( grep "^$key[[:space:]]\+=" "$ca_cnf" )"
+        line="$( grep "^${key}[[:space:]]\+=" "$ca_cnf" )"
         value="$( echo "$line" | cut -d '=' -f2 | xargs )"
         value="$( dir=$ca_dir eval "echo $value" )"
         export ca_"$key"="$value"
         if [ -z "$issuer" ]; then
             unset issuer_"$key"
         else
-            line="$( grep "^$key[[:space:]]\+=" "$issuer_cnf" )"
+            line="$( grep "^${key}[[:space:]]\+=" "$issuer_cnf" )"
             value="$( echo "$line" | cut -d '=' -f2 | xargs )"
             value="$( dir=$issuer_dir eval "echo $value" )"
             export issuer_"$key"="$value"
