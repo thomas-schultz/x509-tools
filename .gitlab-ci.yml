@@ -8,3 +8,11 @@ code test:
   script:
     - "./tests/run_tests.sh -v"
 
+shellcheck:
+  stage: test
+  image: koalaman/shellcheck-alpine:stable
+  before_script:
+    - shellcheck --version
+  script:
+    # Search for severe errors in shell scripts
+    - shellcheck --severity=error $(find . -name "*.sh")
