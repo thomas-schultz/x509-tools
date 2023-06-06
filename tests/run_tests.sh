@@ -128,6 +128,43 @@ function test_create_client_with_san_and_upn {
     ./x509-tool.sh $verbose create client client5 end-ca --passin Password3 -CN="client5" -DNS="client5.foo" -UPN="client5" -E="client5@dotorg.tld"; it $? ${FUNCNAME[0]}
 }
 
+function test_create_client_startdate {
+    echo -e "\ntesting ${FUNCNAME[0]}\n"
+    ago3years="$( date '+%Y%m%d%H%M%S' -d '3 years ago' )Z"
+    after3years="$( date '+%Y%m%d%H%M%S' -d '+3 years' )Z"
+    suc=0
+    ./x509-tool.sh $verbose create client client6 sub-ca --startdate $ago3years --pkcs12 "passphrase" -d 120 --passin Password2 -CN="client6" -E="client6@dotorg.tld";
+    suc=$(( suc + $? ))
+    grep "Not Before.* $( date '+%Y' -d '3 years ago' ) GMT" ./sub-ca/certs/client6/cert.txt
+    suc=$(( suc + $? ))
+    ./x509-tool.sh $verbose create client client7 sub-ca --startdate $after3years --pkcs12 "passphrase" -d 120 --passin Password2 -CN="client7" -E="client7@dotorg.tld";
+    suc=$(( suc + $? ))
+    grep "Not Before.* $( date '+%Y' -d '+3 years' ) GMT" ./sub-ca/certs/client7/cert.txt
+    suc=$(( suc + $? ))
+    it $suc ${FUNCNAME[0]}
+}
+
+function test_create_client_enddate {
+    echo -e "\ntesting ${FUNCNAME[0]}\n"
+    ago3years="$( date '+%Y%m%d%H%M%S' -d '3 years ago' )Z"
+    after3years="$( date '+%Y%m%d%H%M%S' -d '+3 years' )Z"
+    suc=0
+    ./x509-tool.sh $verbose create client client8 sub-ca --enddate $ago3years --pkcs12 "passphrase" -d 120 --passin Password2 -CN="client8" -E="client8@dotorg.tld";
+    suc=$(( suc + $? ))
+    grep "Not After.* $( date '+%Y' -d '3 years ago' ) GMT" ./sub-ca/certs/client8/cert.txt
+    suc=$(( suc + $? ))
+    ./x509-tool.sh $verbose create client client9 sub-ca --enddate $after3years --pkcs12 "passphrase" -d 120 --passin Password2 -CN="client9" -E="client9@dotorg.tld";
+    suc=$(( suc + $? ))
+    grep "Not After.* $( date '+%Y' -d '+3 years' ) GMT" ./sub-ca/certs/client9/cert.txt
+    suc=$(( suc + $? ))
+    it $suc ${FUNCNAME[0]}
+}
+
+function test_create_client_future {
+    echo -e "\ntesting ${FUNCNAME[0]}\n"
+    ./x509-tool.sh $verbose create client client6 sub-ca --startdate 2020-01-01 --pkcs12 "passphrase" -d 120 --passin Password2 -CN="client1" -E="client1@dotorg.tld"; it $? ${FUNCNAME[0]}
+}
+
 function test_revoke_client {
     echo -e "\ntesting ${FUNCNAME[0]}\n"
     ./x509-tool.sh $verbose revoke client sub-ca "client1" --passin Password2 ; it $? ${FUNCNAME[0]}
@@ -203,6 +240,8 @@ test_create_client_with_san
 test_create_client_with_two_sans
 test_create_client_with_dns_and_ip
 test_create_client_with_san_and_upn
+test_create_client_startdate
+test_create_client_enddate
 test_revoke_client
 test_update_ca_crl
 test_update_ca_ocsp
