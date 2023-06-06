@@ -54,6 +54,8 @@ options:
     -b/--bits <number>      set key length
     -d/--days <number>      set validity period in days
     -p/--policy <policy>    set the policy for the CAv
+    --startdate             set the startdate
+    --enddate               set the end date
     --ecdsa-curve <curve>   use specific ecdsa curve
     --ask                   ask for passwords
     --passin <pw>           set passphrase to unlock private key
@@ -74,4 +76,5 @@ options:
         CRL:        crlUrl
         OCSP:       ocspUrl
         URL:        issuerUrl
+
 ```
