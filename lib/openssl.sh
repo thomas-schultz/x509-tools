@@ -43,10 +43,11 @@ function create_ca_csr {
 
 function sign_ca_csr {
     extension="$1" && shift
+    modify="$( date_modify )"
 
     use_ca "$issuer_dir"
 
-    openssl_func ca "$batch_mode" -config "$issuer_cnf" -extensions "$extension" "${passin[@]}" -days "$ca_days" -notext -in "$ca_csr_dir/csr.pem" -out "$ca_certificate"
+    openssl_func ca "$batch_mode" $modify -config "$issuer_cnf" -extensions "$extension" "${passin[@]}" -days "$ca_days" -notext -in "$ca_csr_dir/csr.pem" -out "$ca_certificate"
     cont $?
     puts "$ca_certificate"
 }
@@ -90,8 +91,9 @@ function sign_user_csr {
     user_cnf="$1" && shift
     days="$1" && shift
     extension="$1" && shift
+    modify="$( date_modify )"
 
-    openssl_func ca "$batch_mode" -config "$user_cnf" -extensions "$extension" "${passin[@]}" -days "$days" -notext -in "$ca_dir/csr/$name-csr.pem" -out "$ca_new_certs_dir/$name/cert.pem"
+    openssl_func ca "$batch_mode" $modify -config "$user_cnf" -extensions "$extension" "${passin[@]}" -days "$days" -notext -in "$ca_dir/csr/$name-csr.pem" -out "$ca_new_certs_dir/$name/cert.pem"
     cont $?
     puts "$ca_new_certs_dir/$name/cert.pem"
 }

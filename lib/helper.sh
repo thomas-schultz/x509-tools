@@ -322,3 +322,14 @@ function extract_san_from_csr {
         count=$(( count + 1 ))
     done < <(echo "$altnames" | sed -n 1'p' | tr ',' '\n' )
 }
+
+function date_modify {
+    modify=""
+    if [ -n "${startdate}" ]; then
+        modify="-startdate ${startdate}"
+    fi
+    if [ -n "${enddate}" ]; then
+        modify="-enddate ${enddate}"
+    fi
+    echo "${modify}"
+}
