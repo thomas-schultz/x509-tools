@@ -333,3 +333,17 @@ function date_modify {
     fi
     echo "${modify}"
 }
+
+function date_modify {
+    if [ -n "${startdate}" ] && [ -n "${enddate}" ]; then
+        echo "-startdate ${startdate} -enddate ${enddate}"
+    elif [ -n "${startdate}" ] && [ -z "${enddate}" ]; then
+        start="$( echo ${startdate} | sed 's/\(....\)\(..\)\(..\)\(..\)\(..\)\(..\)/\1-\2-\3 \4:\5:\6/' )"
+        enddate="$( date --date="${start} + ${cert_days} days" "+%Y%m%d%H%M%SZ" )"
+        echo "-startdate ${startdate} -enddate ${enddate}"
+    elif [ -z "${startdate}" ] && [ -n "${enddate}" ]; then
+        end="$( echo ${enddate} | sed 's/\(....\)\(..\)\(..\)\(..\)\(..\)\(..\)/\1-\2-\3 \4:\5:\6/' )"
+        startdate="$( date --date="${end} - ${cert_days} days" "+%Y%m%d%H%M%SZ" )"
+        echo "-startdate ${startdate} -enddate ${enddate}"
+    fi
+}
